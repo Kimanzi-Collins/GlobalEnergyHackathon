@@ -1,12 +1,12 @@
 # 🌍 Global Energy Hackathon
 
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=300&section=header&text=Global%20Energy%20Hackathon&fontSize=90&animation=fadeIn&fontAlignY=38&desc=Innovating%20for%20a%20Sustainable%20Future&descAlignY=51&descAlign=62" alt="Header" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=200&section=header&text=Global%20Energy%20Hackathon&fontSize=50&animation=fadeIn&fontAlignY=38&desc=Innovating%20for%20a%20Sustainable%20Future&descAlignY=55&descAlign=62" alt="Header" width="100%" />
 </div>
 
 <div align="center">
   <a href="https://git.io/typing-svg">
-    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=30&pause=1000&color=36BCF7&center=true&vCenter=true&width=600&height=100&lines=Welcome+to+the+Hackathon!;Building+Sustainable+Energy+Solutions;Collaborate.+Innovate.+Impact." alt="Typing SVG" />
+    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&pause=1000&color=36BCF7&center=true&vCenter=true&width=450&height=50&lines=Welcome+to+the+Hackathon!;Building+Sustainable+Energy+Solutions;Collaborate.+Innovate.+Impact." alt="Typing SVG" style="max-width: 100%;" />
   </a>
 </div>
 
