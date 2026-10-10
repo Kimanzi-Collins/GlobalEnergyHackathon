@@ -1,7 +1,7 @@
-# 🌍 Global Energy Hackathon
+# 🌍 Nvidia x Nebius Hackathon
 
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=200&section=header&text=Global%20Energy%20Hackathon&fontSize=50&animation=fadeIn&fontAlignY=38&desc=Innovating%20for%20a%20Sustainable%20Future&descAlignY=55&descAlign=62" alt="Header" width="100%" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=200&section=header&text=Nvidia%20x%20Nebius%20Hackathon&fontSize=50&animation=fadeIn&fontAlignY=38&desc=Innovating%20for%20a%20Sustainable%20Future&descAlignY=55&descAlign=62" alt="Header" width="100%" />
 </div>
 
 <div align="center">
