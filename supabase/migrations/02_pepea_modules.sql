@@ -94,7 +94,8 @@ CREATE TABLE IF NOT EXISTS guide_steps (
   est_minutes INT,
   cost_usd NUMERIC DEFAULT 0,
   external_url TEXT,
-  ussd_code INT UNIQUE                                  -- numeric menu position
+  ussd_code INT UNIQUE,                                 -- numeric menu position
+  data_verified_at DATE
 );
 
 CREATE TABLE IF NOT EXISTS student_guide_progress (
@@ -119,6 +120,8 @@ ALTER TABLE universities
   ADD COLUMN IF NOT EXISTS strong_majors TEXT[] DEFAULT '{}',
   ADD COLUMN IF NOT EXISTS intl_aid_notes TEXT,
   ADD COLUMN IF NOT EXISTS data_verified_at DATE;        -- NULL means NOT yet verified against the school's own site
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_universities_name ON universities(name);
 
 CREATE TABLE IF NOT EXISTS university_matches (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -155,6 +158,8 @@ CREATE TABLE IF NOT EXISTS aid_programs (
   data_verified_at DATE,                                -- NULL means NOT yet verified. UI must show "unverified".
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_aid_programs_name ON aid_programs(name);
 
 CREATE TABLE IF NOT EXISTS student_aid_matches (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -69,24 +69,24 @@ Everything below is **not started**.
 
 | ID | P | Owner | Task | Status |
 |---|---|---|---|---|
-| BE-DB-01 | P0 | Geoffrey | Create the Supabase project. Run `01_pepea_schema.sql`, `02_pepea_modules.sql`, `seed.sql`, `seed_02_modules.sql` in order. Fix any SQL errors in place and log them. Add keys to `.env.local` | `[ ]` |
-| BE-DB-02 | P0 | Geoffrey | Verify RLS: the anon key must read only reference tables (`universities`, `kcse_grade_scale`, `guide_steps`, `aid_programs`, `essay_types`, `school_essay_prompts`, `flagged_agencies`) and nothing student-owned. Write the check as a script | `[ ]` |
-| BE-DB-03 | P0 | Geoffrey | Create `lib/db/` with typed query helpers (snake_case to camelCase mappers using `lib/types.ts`). No raw `.from()` calls in route handlers | `[ ]` |
-| BE-DB-04 | P0 | Geoffrey | Replace the silent `demo.supabase.co` fallback in `lib/at-supabase.ts`: in live mode a missing key throws at startup | `[ ]` |
-| BE-DB-05 | P1 | Esther | **Verify seed data** against official sites: every `school_essay_prompts`, `universities`, `aid_programs`, `guide_steps` fee/date. Fix wrong values, set `data_verified_at` per row. Anything unverified before the demo stays visibly "Unverified" | `[ ]` |
-| BE-DB-06 | P1 | Esther | Extend `universities` to 12 to 15 schools (need-blind or meets-full-need for internationals) with `strong_majors`, `test_policy`, `cost_of_attendance_usd`, prompts per essay type | `[ ]` |
-| BE-DB-07 | P2 | Geoffrey | Data retention: add a delete-my-data function (profile, messages, essays, reviews) for Kenya Data Protection Act compliance | `[ ]` |
+| BE-DB-01 | P0 | Geoffrey | Create the Supabase project. Run `01_pepea_schema.sql`, `02_pepea_modules.sql`, `seed.sql`, `seed_02_modules.sql` in order. Fix any SQL errors in place and log them. Add keys to `.env.local` | `[x]` |
+| BE-DB-02 | P0 | Geoffrey | Verify RLS: the anon key must read only reference tables (`universities`, `kcse_grade_scale`, `guide_steps`, `aid_programs`, `essay_types`, `school_essay_prompts`, `flagged_agencies`) and nothing student-owned. Write the check as a script | `[x]` |
+| BE-DB-03 | P0 | Geoffrey | Create `lib/db/` with typed query helpers (snake_case to camelCase mappers using `lib/types.ts`). No raw `.from()` calls in route handlers | `[x]` |
+| BE-DB-04 | P0 | Geoffrey | Replace the silent `demo.supabase.co` fallback in `lib/at-supabase.ts`: in live mode a missing key throws at startup | `[x]` |
+| BE-DB-05 | P1 | Esther | **Verify seed data** against official sites: every `school_essay_prompts`, `universities`, `aid_programs`, `guide_steps` fee/date. Fix wrong values, set `data_verified_at` per row. Anything unverified before the demo stays visibly "Unverified" | `[x]` |
+| BE-DB-06 | P1 | Esther | Extend `universities` to 12 to 15 schools (need-blind or meets-full-need for internationals) with `strong_majors`, `test_policy`, `cost_of_attendance_usd`, prompts per essay type | `[x]` |
+| BE-DB-07 | P2 | Geoffrey | Data retention: add a delete-my-data function (profile, messages, essays, reviews) for Kenya Data Protection Act compliance | `[x]` |
 
 ### 5.2 Shared server libraries (all P0, Geoffrey)
 
 | ID | Task | Status |
 |---|---|---|
-| BE-LIB-01 | `lib/phone.ts`: `normalizeKenyanPhone()` accepting `07xx`, `01xx`, `+2547xx`, `2547xx`; rejects the rest | `[ ]` |
-| BE-LIB-02 | `lib/student-context.ts`: `buildStudentContext(phone)` returns `StudentContext` (profile, facts, last 10 messages, next deadline) | `[ ]` |
-| BE-LIB-03 | `lib/gemini.ts`: one wrapper `callGemini({module, channel, context, verifiedData, userInput, json?})` using `buildSystemPrompt`, model `gemini-2.5-flash`, 8s timeout, one retry, JSON-mode parsing with schema validation, typed errors (`UPSTREAM_AI`). Esther owns, Geoffrey reviews | `[ ]` |
-| BE-LIB-04 | `lib/rate-limit.ts`: per-phone and per-IP limits (for example 20 AI calls per phone per hour, 5 SMS per phone per day). Applies to every route that triggers Gemini or SMS | `[ ]` |
-| BE-LIB-05 | `lib/at.ts`: AT client for SMS, WhatsApp, Voice. Live mode throws on failure. Demo mode only when `NEXT_PUBLIC_DEMO_MODE=true` | `[ ]` |
-| BE-LIB-06 | `lib/webhook-auth.ts`: shared-secret check (secret in the callback URL query, compared in constant time) plus optional IP allowlist, for all AT webhooks | `[ ]` |
+| BE-LIB-01 | `lib/phone.ts`: `normalizeKenyanPhone()` accepting `07xx`, `01xx`, `+2547xx`, `2547xx`; rejects the rest | `[x]` |
+| BE-LIB-02 | `lib/student-context.ts`: `buildStudentContext(phone)` returns `StudentContext` (profile, facts, last 10 messages, next deadline) | `[x]` |
+| BE-LIB-03 | `lib/gemini.ts`: one wrapper `callGemini({module, channel, context, verifiedData, userInput, json?})` using `buildSystemPrompt`, model `gemini-2.5-flash`, 8s timeout, one retry, JSON-mode parsing with schema validation, typed errors (`UPSTREAM_AI`). Esther owns, Geoffrey reviews | `[x]` |
+| BE-LIB-04 | `lib/rate-limit.ts`: per-phone and per-IP limits (for example 20 AI calls per phone per hour, 5 SMS per phone per day). Applies to every route that triggers Gemini or SMS | `[x]` |
+| BE-LIB-05 | `lib/at.ts`: AT client for SMS, WhatsApp, Voice. Live mode throws on failure. Demo mode only when `NEXT_PUBLIC_DEMO_MODE=true` | `[x]` |
+| BE-LIB-06 | `lib/webhook-auth.ts`: shared-secret check (secret in the callback URL query, compared in constant time) plus optional IP allowlist, for all AT webhooks | `[x]` |
 
 ### 5.3 API setup
 
@@ -94,17 +94,17 @@ All routes return `ApiError` on failure, validate input (zod recommended), norma
 
 | ID | P | Owner | Route | Task | Status |
 |---|---|---|---|---|---|
-| BE-API-01 | P0 | Geoffrey | `POST /api/students` and `GET /api/students/me` | Upsert and read the profile (`UpsertStudentRequest`). **Never overwrite a field with a default** (the current USSD route overwrites `full_name` with "KCSE Applicant") | `[ ]` |
-| BE-API-02 | P0 | Geoffrey | `GET/POST /api/gpa` | Convert using `kcse_grade_scale`. Accept `meanGrade`, `points` or `subjects` (`GpaConvertRequest`). Store in `gpa_conversions`, update `students.kcse_grade` and `gpa_equivalent`. Always return `indicative: true` | `[ ]` |
-| BE-API-03 | P1 | Geoffrey | `GET /api/guide`, `POST /api/guide/progress` | Steps with per-student status (`GuideResponse`). Idempotent progress updates | `[ ]` |
-| BE-API-04 | P1 | Esther | `GET /api/essays/catalog` | Types plus per-school prompts (`EssayCatalogResponse`). Supports `?universityId=` and `?type=` | `[ ]` |
-| BE-API-05 | P0 | Esther | `POST /api/essays/review` | Replace `/api/ao/review`. Validate that `schoolPromptId` is present for `school_specific` types, enforce the type's rubric and word limit, create or append an `essays` row and `essay_versions`, call Gemini (`module: 'essay'`), save to `essay_reviews` with `prompt_version`. Return `EssayReviewResponse`. Delete the old route once the frontend switches | `[ ]` |
-| BE-API-06 | P1 | Esther | `GET /api/essays`, `GET /api/essays/[id]` | List a student's essays and version history with latest score | `[ ]` |
-| BE-API-07 | P1 | Esther | `POST /api/lor/review` | Review a recommendation letter draft (`LorReviewRequest`), store in `lor_reviews` | `[ ]` |
-| BE-API-08 | P1 | Esther | `POST /api/advisor` | Rule-based shortlist from `universities` plus the student's grade, tests, majors and aid band, then Gemini explains it (`AdvisorResponse`). The model may only name schools returned by the query. Store in `university_matches` | `[ ]` |
-| BE-API-09 | P1 | Esther | `POST /api/aid` | Rank `aid_programs` for the student (`AidScoutResponse`), Gemini explains next actions using only the returned rows. Store in `student_aid_matches` | `[ ]` |
-| BE-API-10 | P1 | Esther | `POST /api/chat` | Router: classify intent into a module, build context, call Gemini, save messages, return `ChatResponse`. Used by web and WhatsApp | `[ ]` |
-| BE-API-11 | P2 | Geoffrey | `GET /api/cue?q=` | CUE lookup from `flagged_agencies` (database, not `mock-data.ts`) | `[ ]` |
+| BE-API-01 | P0 | Geoffrey | `POST /api/students` and `GET /api/students/me` | Upsert and read the profile (`UpsertStudentRequest`). **Never overwrite a field with a default** (the current USSD route overwrites `full_name` with "KCSE Applicant") | `[x]` |
+| BE-API-02 | P0 | Geoffrey | `GET/POST /api/gpa` | Convert using `kcse_grade_scale`. Accept `meanGrade`, `points` or `subjects` (`GpaConvertRequest`). Store in `gpa_conversions`, update `students.kcse_grade` and `gpa_equivalent`. Always return `indicative: true` | `[x]` |
+| BE-API-03 | P1 | Geoffrey | `GET /api/guide`, `POST /api/guide/progress` | Steps with per-student status (`GuideResponse`). Idempotent progress updates | `[x]` |
+| BE-API-04 | P1 | Esther | `GET /api/essays/catalog` | Types plus per-school prompts (`EssayCatalogResponse`). Supports `?universityId=` and `?type=` | `[x]` |
+| BE-API-05 | P0 | Esther | `POST /api/essays/review` | Replace `/api/ao/review`. Validate that `schoolPromptId` is present for `school_specific` types, enforce the type's rubric and word limit, create or append an `essays` row and `essay_versions`, call Gemini (`module: 'essay'`), save to `essay_reviews` with `prompt_version`. Return `EssayReviewResponse`. Delete the old route once the frontend switches | `[x]` |
+| BE-API-06 | P1 | Esther | `GET /api/essays`, `GET /api/essays/[id]` | List a student's essays and version history with latest score | `[x]` |
+| BE-API-07 | P1 | Esther | `POST /api/lor/review` | Review a recommendation letter draft (`LorReviewRequest`), store in `lor_reviews` | `[x]` |
+| BE-API-08 | P1 | Esther | `POST /api/advisor` | Rule-based shortlist from `universities` plus the student's grade, tests, majors and aid band, then Gemini explains it (`AdvisorResponse`). The model may only name schools returned by the query. Store in `university_matches` | `[x]` |
+| BE-API-09 | P1 | Esther | `POST /api/aid` | Rank `aid_programs` for the student (`AidScoutResponse`), Gemini explains next actions using only the returned rows. Store in `student_aid_matches` | `[x]` |
+| BE-API-10 | P1 | Esther | `POST /api/chat` | Router: classify intent into a module, build context, call Gemini, save messages, return `ChatResponse`. Used by web and WhatsApp | `[x]` |
+| BE-API-11 | P2 | Geoffrey | `GET /api/cue?q=` | CUE lookup from `flagged_agencies` (database, not `mock-data.ts`) | `[x]` |
 
 ### 5.4 Africa's Talking live integrations
 
@@ -336,6 +336,30 @@ Add a row for every new prompt or heuristic and bump the version string on any e
 | 2026-10-29 | Claude (for Collins) | CREATE | `lib/utils.ts`, `lib/motion.ts`, `lib/strings.ts`, `lib/kcse-scale.ts`, `lib/fixtures/essays.ts` | Helpers, motion tokens, en/sw strings, offline copies of seed data |
 | 2026-10-29 | Claude (for Collins) | DELETE | `components/AOReviewStudio.tsx`, `CUERadar.tsx`, `CollegeMatcher.tsx`, `Footer.tsx`, `HeroBanner.tsx`, `Navbar.tsx`, `USSDPhoneSimulator.tsx`, `VoiceStudio.tsx` | Replaced by the new landing components. The essay review UI is now Sandra's FE-S-05; the mock interview voice flow stays on the backend (`/api/at/voice`) with no landing section |
 | 2026-10-29 | Claude (for Collins) | MODIFY | `DESIGN.md` | Revised to the Apple-grade direction; sections 3, 4, 7.1 and 12 updated to match what is built |
+| 2026-10-29 | Geoffrey | CREATE | `lib/phone.ts` | Kenyan phone normalizer to E.164 (BE-LIB-01) |
+| 2026-10-29 | Geoffrey | MODIFY | `lib/at-supabase.ts` | Strict live-mode key validation; throws if missing (BE-DB-04) |
+| 2026-10-29 | Geoffrey | CREATE | `lib/db/` | Typed DB query helpers: client, students, gpa, guide, essays, lor, advisor, aid, chat, facts, cue, index (BE-DB-03, BE-DB-07) |
+| 2026-10-29 | Geoffrey | CREATE | `scripts/verify-rls.ts` | Row Level Security verification test script (BE-DB-02) |
+| 2026-10-29 | Geoffrey | CREATE | `lib/student-context.ts` | Multi-module student context builder (BE-LIB-02) |
+| 2026-10-29 | Esther / Geoffrey | CREATE | `lib/gemini.ts` | Gemini 2.5 Flash caller with 8s timeout, retry, typed errors, prompt injection hardening (BE-LIB-03) |
+| 2026-10-29 | Geoffrey | CREATE | `lib/rate-limit.ts` | In-memory phone and IP rate limiter (BE-LIB-04) |
+| 2026-10-29 | Geoffrey | CREATE | `lib/at.ts` | Africa Talking client for SMS, WhatsApp, Voice with live error handling (BE-LIB-05) |
+| 2026-10-29 | Geoffrey | CREATE | `lib/webhook-auth.ts` | Constant-time webhook secret check and IP allowlist (BE-LIB-06) |
+| 2026-10-29 | Esther | MODIFY | `supabase/seed_02_modules.sql` | Verified KNEC KCSE scale, 12 guide steps (<=160 chars), 22 aid programs, 15 top universities, and 39 2026-27 essay prompts with data_verified_at = '2026-10-29' (BE-DB-05, BE-DB-06) |
+| 2026-10-29 | Esther | MODIFY | `supabase/migrations/01_pepea_schema.sql`, `02_pepea_modules.sql`, `seed.sql` | Idempotent unique indexes on universities, aid_programs, and flagged_agencies (BE-DB-05, BE-DB-06) |
+| 2026-10-29 | Esther | MODIFY | `lib/types.ts` | Added dataVerifiedAt to GuideStep interface (BE-DB-05) |
+| 2026-10-29 | Geoffrey | CREATE | `app/api/students/route.ts`, `app/api/students/me/route.ts` | Profile upsert & read, phone normalization, prevents default field overwrite (BE-API-01) |
+| 2026-10-29 | Geoffrey | CREATE | `app/api/gpa/route.ts` | Indicative KCSE-to-GPA conversion via grade, points (7-84), or subjects, with full scale GET (BE-API-02) |
+| 2026-10-29 | Esther / Geoffrey | CREATE | `app/api/essays/review/route.ts` | Versioned essay draft review with Gemini 2.5 Flash, rubric scoring, and conversation logging (BE-API-05) |
+| 2026-10-29 | Geoffrey | CREATE | `app/api/guide/route.ts`, `app/api/guide/progress/route.ts` | 12-step application guide with per-student status and idempotent progress updates (BE-API-03) |
+| 2026-10-29 | Esther | CREATE | `app/api/essays/catalog/route.ts` | Essay types and per-school prompts catalog grouped by university (BE-API-04) |
+| 2026-10-29 | Esther | CREATE | `app/api/essays/route.ts`, `app/api/essays/[id]/route.ts` | Student essays list, version timeline, latest review, privacy enforcement (BE-API-06) |
+| 2026-10-29 | Esther | CREATE | `app/api/lor/review/route.ts` | LOR recommendation letter review with Gemini 2.5 Flash, rubric scoring, and Kenya context tips (BE-API-07) |
+| 2026-10-29 | Esther | CREATE | `app/api/advisor/route.ts` | University advisory matching into reach/target/likely with grounded Gemini explanation (BE-API-08) |
+| 2026-10-29 | Esther | CREATE | `app/api/aid/route.ts` | Financial aid scout matching verified aid programs and fee waivers with fit scoring (BE-API-09) |
+| 2026-10-29 | Esther | CREATE | `app/api/chat/route.ts` | Multi-channel chat router with 9-module intent classification, context building, and quick replies (BE-API-10) |
+| 2026-10-29 | Geoffrey | CREATE | `app/api/cue/route.ts` | CUE blacklist radar querying flagged_agencies with safety advisory (BE-API-11) |
+| 2026-10-29 | Team | CREATE | `scripts/test-api-routes.ts` | 62-assertion automated end-to-end integration test suite for all P1 & P2 API routes |
 | 2026-10-29 | Sandra (logged by Claude) | CREATE | `app/dashboard/layout.tsx`, `app/dashboard/page.tsx` | Dashboard shell and overview (FE-S-01, FE-S-09), on fixtures |
 | 2026-10-29 | Sandra (logged by Claude) | CREATE | `app/dashboard/gpa/page.tsx`, `guide/page.tsx`, `essays/page.tsx`, `lor/page.tsx`, `advisor/page.tsx`, `aid/page.tsx`, `context/page.tsx` | Module pages (FE-S-02 to FE-S-08), on fixtures |
 | 2026-10-29 | Sandra (logged by Claude) | CREATE | `components/dashboard/DashboardNav.tsx`, `lib/session-context.tsx`, `lib/fixtures/index.ts` | Dashboard navigation, phone-number session, typed fixtures |
@@ -355,7 +379,7 @@ Add a row for every new prompt or heuristic and bump the version string on any e
 1. **USSD code:** `*384*73732#` is a placeholder in the correct numeric form. AT assigns the real code per channel; confirm and update `lib/constants.ts`. (Geoffrey, BE-AT-01)
 2. **WhatsApp live access:** confirm what AT requires for a live WhatsApp number (business approval, templates, sandbox limits) and the send API format. If live is not possible before the demo, say so here and the demo shows the sandbox number. (Esther, BE-AT-04)
 3. **Authentication:** the MVP identifies students by phone number. Without OTP, anyone who knows a number can open that student's dashboard. Decide before launch: SMS OTP via AT (recommended) or accept this for a closed demo only. (Team)
-4. **Verified data:** seed rows are unverified until BE-DB-05 is done.
+4. **Verified data:** Verified on 2026-10-29 (BE-DB-05 & BE-DB-06 done; all 15 schools, 39 prompts, 12 guide steps, and 22 aid programs verified).
 5. **Kiswahili:** designed for, not translated.
 6. **Merge incident (2026-10-29): what to do differently.** PR #4 merged with no textual conflict markers and still broke `master` (case-colliding filenames, dropped design tokens, 17 type errors, no `AGENTS.md` update). A clean git merge is not proof that the app works. Before any push to `master`: `git pull`, `npx tsc --noEmit`, `npx next build`. (Team)
 7. **Converged UI kit (FE-S-12 done).** `components/ui/` is now the single unified kit across landing and dashboard. `components/dashboard/ui/` has been removed. (Sandra)
