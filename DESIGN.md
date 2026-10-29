@@ -2,7 +2,9 @@
 
 Target: Awwwards-level craft (rubric score 9-10) that still runs on a mid-range Android on a 3G connection in Kitui.
 Owners: Collins (design system, landing, USSD simulator) and Sandra (dashboard, module interfaces).
-Status: spec only. Nothing here is implemented yet. Build against it and update it when a decision changes.
+Status: landing page, UI kit, motion kit and USSD simulator are built (2026-10-29). Dashboard and module pages are Sandra's and build against this spec.
+
+**Direction (revised 2026-10-29): Apple-grade.** Quiet, product-first, huge type, generous space, alternating light and dark chapters, frosted nav, one accent. Palette and typeface below replace the earlier editorial draft (Fraunces, bone, acacia).
 
 ---
 
@@ -13,7 +15,7 @@ Status: spec only. Nothing here is implemented yet. Build against it and update 
 **Visual tension:** the humble and the elite. A green-phosphor USSD screen on a 2G phone sits beside editorial serif typography worthy of a university press. Neither is allowed to feel like the "lesser" one; the phone is treated as the hero object.
 
 **Signature moment: "The Crossing."** A pinned scroll sequence on the landing page.
-1. A monumental KCSE result, `A  82/84`, fills the viewport in Fraunces.
+1. A monumental KCSE result, `A  82/84`, fills the viewport in Geist at display size.
 2. As the user scrolls, each digit rolls (odometer style, transform only) and resolves into `4.0`.
 3. In the same scroll, a dotted flight line (the 1959-63 Kennedy-Mboya Airlift route) draws from Nairobi to Cambridge, MA as an SVG stroke-dashoffset animation.
 4. The USSD phone docks in from the right and types the numeric dial code `*384*73732#` live.
@@ -40,90 +42,78 @@ Screenshot test: the frame where `82/84` is halfway to `4.0` with the arc mid-At
 
 | Role | Family | Use |
 |---|---|---|
-| Display | **Fraunces** (variable: `opsz` 9-144, `SOFT` 0-100, `wght` 100-900) | Headlines, big numerals, essay titles |
-| UI / body | **Space Grotesk** (variable) | Interface text, forms, paragraphs |
-| Data / USSD | **JetBrains Mono** | Codes, scores, the phone screen, hashes of IDs |
+| Display and UI | **Geist Sans** (variable, self-hosted through the `geist` package) | Everything: headlines, body, forms |
+| Data / USSD | **Geist Mono** | Codes, scores, the phone screen, countdown |
 
-Load with `next/font/google`, `display: 'swap'`, `subsets: ['latin']`, only the axes used. Preload Fraunces and Space Grotesk. Total font payload budget: 120 KB.
+Geist is a neo-grotesque with the clarity of SF Pro, which gives the Apple register without relying on `system-ui`. Loaded in `app/layout.tsx` as CSS variables `--font-geist-sans` and `--font-geist-mono`. No third-party font requests.
 
-Never use Inter, Roboto, Arial or `system-ui` as the primary face.
+### Scale (fluid; display is 10:1 or more against body)
 
-### Scale (fluid, 10:1 or more between display and body)
+Defined in `tailwind.config.ts` as `text-micro`, `text-body`, `text-lead`, `text-h3`, `text-h2`, `text-h1`, `text-mega`:
 
-```css
---step--1: clamp(0.78rem, 0.76rem + 0.1vw, 0.85rem);   /* labels, mono captions */
---step-0:  clamp(1rem, 0.96rem + 0.2vw, 1.125rem);     /* body 16-18px */
---step-1:  clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
---step-2:  clamp(1.6rem, 1.4rem + 1vw, 2.25rem);
---step-3:  clamp(2.2rem, 1.7rem + 2.5vw, 3.75rem);
---step-4:  clamp(3rem, 2rem + 5vw, 6.5rem);
---step-5:  clamp(4.5rem, 2.5rem + 10vw, 13rem);        /* hero numerals: ~190px desktop, 72px phone */
-```
+| Token | Size (phone to desktop) | Tracking | Line height |
+|---|---|---|---|
+| micro | 11.5px to 12.8px | +0.02em | 1.3 |
+| body | 16px to 18px | 0 | 1.6 |
+| lead | 20px to 28px | -0.012em | 1.35 |
+| h3 | 24px to 36px | -0.022em | 1.12 |
+| h2 | 36px to 80px | -0.035em | 1.02 |
+| h1 | 48px to 136px | -0.045em | 0.96 |
+| mega | 80px to 320px | -0.06em | 0.84 |
 
-- Display tracking `-0.03em` to `-0.05em`, line-height `0.9`-`1.0`. Body line-height `1.6`, measure 45-75 characters.
-- `text-wrap: balance` on all headings, `text-wrap: pretty` on paragraphs.
-- Control line breaks on the hero by hand at three breakpoints.
-- Hover weight shift on large links: Fraunces `wght` 400 to 600 with `font-variation-settings`, no layout shift (reserve width with a hidden bold clone).
-- Use real typographic marks: curly quotes, en/em dashes, proper `×`, and `tabular-nums` on scores and countdowns.
+- Headlines are semibold with tight tracking, on a single idea of 3 to 7 words. Manual line breaks (`\n`) in `SplitLines`.
+- `text-wrap: balance` on headings, `pretty` on paragraphs, `tabular-nums` on every number that changes.
+- The Crossing numerals scale with viewport height (`min(16vw, 24vh)`) so they never collide with captions, and carry right padding so tight tracking cannot clip the last glyph.
+- Real typographic marks: curly quotes, proper dashes. No emoji in the UI.
 
 ---
 
 ## 4. Colour
 
-Invented for this project, from Kenyan ground and light. Never pure black or white.
+Near-black and near-white (never #000 or #FFF), one warm accent drawn from Kenyan laterite and a sunrise gradient used for one word at a time.
 
 | Token | Hex | Meaning |
 |---|---|---|
-| `--ink` | `#12110E` | Warm black, primary dark surface and text on light |
-| `--bone` | `#F4EFE4` | Paper, primary light surface |
-| `--bone-2` | `#E9E2D2` | Raised surface on light |
-| `--acacia` | `#1E3B2A` | Deep green, "guide" and "aid" chapters |
-| `--murram` | `#B8431F` | Laterite red. The one accent on light surfaces, and the scam-warning colour |
-| `--saffron` | `#E8A83A` | The one accent on dark surfaces |
-| `--phosphor` | `#8CF2A6` | USSD screen text only |
-| `--screen` | `#07130B` | USSD screen background only |
+| `ink` | `#0B0B0D` | Dark chapters |
+| `graphite` | `#1D1D1F` | Text on light, surface on dark |
+| `snow` | `#FBFBFD` | Light chapters |
+| `paper` | `#F5F5F7` | Raised light surface, alternate light chapter |
+| `murram` | `#A63A18` | The accent on light chapters, buttons, scam warning |
+| `saffron` | `#F2A93B` | The accent on dark chapters |
+| `phosphor` / `screen` | `#8CF2A6` / `#07130B` | USSD screen only |
 
-Functional tokens (light / dark chapters):
+Sunrise gradient (`murram` to `saffron`) is for a single word in a headline (the "4.0"), never for blocks or backgrounds.
 
-```css
---text-1: var(--ink);        /* on bone */           /* on ink/acacia: var(--bone) */
---text-2: rgb(18 17 14 / .62);                         /* on dark: rgb(244 239 228 / .62) */
---text-3: rgb(18 17 14 / .55);                         /* captions, never below 55% */
---border: rgb(18 17 14 / .12);                         /* on dark: rgb(244 239 228 / .14) */
---accent: var(--murram);                               /* on dark: var(--saffron) */
-```
+### Chapter tokens
+
+Components never use raw hex. Each landing section sets `data-chapter` (`light`, `paper`, `dark`, `wash`) which re-points these CSS variables, and Tailwind exposes them as `bg-bg`, `bg-surface`, `text-fg`, `text-fg2`, `border-line`, `bg-accent`, `text-accent-fg`. The nav reads the chapter beneath it and tints itself.
+
+| Chapter | bg | surface | fg | fg2 | accent |
+|---|---|---|---|---|---|
+| light | snow | paper | graphite | #6E6E73 | murram |
+| paper | paper | snow | graphite | #6E6E73 | murram |
+| dark | ink | graphite | snow | #A1A1A6 | saffron |
+| wash | #F3E4DC | #FBF1EB | graphite | #554E4A | murram |
 
 ### Measured contrast (WCAG 2.1)
 
 | Pair | Ratio | Allowed use |
 |---|---|---|
-| ink on bone | 16.5 | all text |
-| bone on acacia | 10.7 | all text |
-| saffron on ink | 9.1 | all text |
+| graphite on paper | 15.5 | all text |
+| snow on ink | 19.0 | all text |
+| #A1A1A6 on ink | 7.6 | secondary text on dark |
+| #6E6E73 on snow | 4.9 | secondary text on light (AA) |
+| #6E6E73 on paper | 4.7 | secondary text (AA) |
+| murram on paper | 6.0 | text and links |
+| snow on murram | 6.3 | button label |
+| saffron on ink | 9.9 | text and links on dark |
 | phosphor on screen | 13.9 | USSD screen |
-| ink 62% on bone | 4.7 | secondary text (AA) |
-| murram on bone | 4.7 | text 18px+ bold or any text 16px+ (AA) |
-| bone 60% on acacia | 4.9 | secondary text on green |
-| saffron on acacia | 5.9 | accents on green |
-| murram on ink | 3.5 | **graphics only. Never text.** Use saffron on dark |
-| ink 45% on bone | 3.0 | **forbidden for text** |
+| #6E6E73 on wash | 4.1 | **do not use**: wash uses #554E4A instead |
+| murram on ink | below 4.5 | **graphics only, never text** |
 
-### Contextual chapters (colour shifts as you scroll)
+Status colours: Verified, Unverified and Indicative are shown by label and outline style, never by colour alone.
 
-| Chapter | Background | Accent |
-|---|---|---|
-| Hero / The Crossing | bone | murram |
-| Guide, Aid | acacia | saffron |
-| Essays, LOR, Advisor | ink | saffron |
-| CUE scam radar | murram wash on bone | ink |
-
-Chapter changes use a 600ms background colour transition triggered by an `IntersectionObserver` on section borders. Accent appears on CTAs, the active nav item and one detail per section. Never everywhere.
-
-Grain: a 3% SVG noise overlay (`mix-blend-mode: multiply`, `pointer-events: none`, static, not animated) gives paper texture. Disable under `prefers-reduced-data`.
-
-`::selection { background: var(--murram); color: var(--bone); }`, on dark chapters `var(--saffron)` / `var(--ink)`.
-
-Status colours (dashboard badges): verified = acacia, unverified = saffron outline with the word "Unverified", reach/target/likely = ink outline, saffron, acacia fill. Colour is never the only signal: pair with a label.
+`::selection` uses the chapter accent. Focus rings are 2px accent outlines with 3px offset.
 
 ---
 
@@ -133,7 +123,7 @@ Status colours (dashboard badges): verified = acacia, unverified = saffron outli
 - Break the grid on purpose: the hero numeral bleeds off the right edge (`margin-right: -4vw`), module headings offset to column 2, pull quotes hang in the margin.
 - Alternate dense (data tables, checklists) with empty sections (one sentence on a full viewport). White space is the pacing tool.
 - Cards vary in size within a grid. No uniform three-column card rows.
-- Section anatomy: mono label (`01 / Guide`), Fraunces headline, one-sentence subhead, then content.
+- Section anatomy: mono label (`01 / Guide`), semibold headline, one-sentence subhead, then content.
 - Spacing scale: 4, 8, 12, 16, 24, 32, 48, 72, 112, 176. Vertical rhythm between chapters is 112-176px on desktop and 72-112px on phones.
 - Mobile-first: all primary actions reachable by thumb (bottom 40% of screen). Sticky bottom action bar on module pages.
 
@@ -184,23 +174,27 @@ Nothing over 1.2s unless it is scroll-scrubbed.
 
 ## 7. Pages and storyboard
 
-### 7.1 Landing `/` (Collins)
+### 7.1 Landing `/` (Collins) (built)
 
-| # | Section | Chapter | Beat |
+Eight chapters, light and dark alternating like an Apple product page. Frosted 52px nav that hides on scroll down.
+
+| # | Section (file) | Chapter | Beat |
 |---|---|---|---|
-| 1 | **Hero.** Headline: "From 84 points to 4.0." Subhead: "Free guidance for Kenyan students applying to US universities. On any phone." Two CTAs: *Start your plan* and *Dial \*384\*73732#*. 72h countdown as a mono ticker | bone | Giant Fraunces type, phone half-visible bottom right |
-| 2 | **The Crossing** (signature moment) | bone to acacia | Pinned scroll, see Section 1 |
-| 3 | **Six tools, one assistant.** Guide, GPA, Aid, Essays, LOR, Advisor presented as an index list (large type rows, hover reveals a one-line preview), not icon cards | acacia | Hover weight shift, magnetic row arrow |
-| 4 | **Works on any phone.** USSD simulator pinned beside copy; numbers only | ink | Live calls to `/api/at/ussd` |
-| 5 | **Essays, by type and school.** Two-column picker (type on the left, school on the right) animating into a mock review | ink | Shows the rubric bars filling |
-| 6 | **The Scam Radar.** Murram-washed section; search a name, see the CUE list | bone with murram wash | Warning stamp motion (scale + rotate 2deg, once) |
-| 7 | **Proof.** Three numbers in monumental type (5,337 / 20 / $0) with sources | bone | Counters roll on enter |
-| 8 | **Footer.** Giant wordmark crop, WhatsApp and USSD codes, "100% free" | ink | Wordmark slides up |
+| 1 | **Hero** (`hero.tsx`): countdown, "From 84 points to 4.0." with the gradient on "4.0", two actions, a scripted phone rising and cropped by the section edge | light | Word-by-word mask reveal, 80ms stagger; phone parallax |
+| 2 | **The Crossing** (`crossing.tsx`): 340vh pinned scroll. 82/84 rolls into 4.0, a dotted route is drawn from Nairobi to Cambridge, three captions, the dial code | dark | Signature moment. Static version for reduced-motion and Save-Data |
+| 3 | **Six tools** (`tools.tsx`): asymmetric bento (7/5, 4/8, 5/7 columns), a live GPA converter tile | paper | Cards lift on hover |
+| 4 | **On any phone** (`ussd-section.tsx`): numeric-only simulator wired to `/api/at/ussd`, request log, 182-character counter | dark | Copy column is sticky beside the phone |
+| 5 | **Essays by type and school** (`essays-section.tsx`): type picker, school picker, prompt, rubric bars | light | Bars fill with scaleX on each selection |
+| 6 | **Stay safe** (`cue-radar.tsx`): CUE list search with hit, miss and idle states | wash | Cross-fade between states |
+| 7 | **Proof** (`proof.tsx`): 5,337 / 20 / 0 in monumental type | paper | Digits roll once (`Odometer`) |
+| 8 | **Footer** (`footer.tsx`): wordmark cropped by the page edge, codes, disclaimer | dark | |
+
+Calls to action point at on-page anchors (`#phone`, `#tools`) until the dashboard exists; change the hero and nav buttons to `/dashboard` when FE-S-01 ships.
 
 ### 7.2 Dashboard `/dashboard` (Sandra)
 
 Student view, after phone verification. Same tokens, denser layout.
-- **Top band:** greeting in Fraunces, next deadline as a mono countdown, progress ring (SVG) for guide completion.
+- **Top band:** greeting in large Geist, next deadline as a mono countdown, progress ring (SVG) for guide completion.
 - **Context card:** the student profile (KCSE, tests, majors, aid band) with inline edit and a "this is what Pepea tells Gemini about you" disclosure. Consent state visible.
 - **Main grid (asymmetric):** Guide checklist (wide), Matches (tall), Aid (medium), Essays by school (wide), Recent chat (narrow).
 - **Empty states:** every list has a designed empty state with one action and a USSD hint.
@@ -235,13 +229,13 @@ Chat bubble view of the same conversation the student has on WhatsApp, read-only
 
 ## 8. Component specs
 
-**Buttons.** Primary: accent fill, bone text, 48px high (56px on phones), radius 999px, Fraunces-free (Space Grotesk 600, uppercase tracking 0.06em). Magnetic pull on desktop (max 8px, pointer devices only). Press: scale 0.97, 160ms. Focus: 2px outline offset 3px in `--accent`, plus 1px inner ring for contrast on any chapter. Secondary: outline. Ghost: underline that grows from left.
+**Buttons.** Primary: accent fill, `accent-fg` text, 44px high (56px for hero actions), radius 999px, Geist medium with tight tracking. Magnetic pull on desktop (max 8px, pointer devices only). Press: scale 0.97, 160ms. Focus: 2px outline offset 3px in `--accent`, plus 1px inner ring for contrast on any chapter. Secondary: outline. Ghost: underline that grows from left.
 
-**Inputs.** Underline-style fields with floating mono labels; error text sits under the field in `--murram` (light) or `--saffron` (dark) with an icon and a sentence that says how to fix it. Text areas for essays: serif (Fraunces 18px), generous line-height, live word counter that turns accent when within 10% of the limit and stays accent (not red-only) when over, with the words "over by N".
+**Inputs.** Rounded surface fields with a visible label above, hint below; error text sits under the field in the chapter accent with an icon and a sentence that says how to fix it. Text areas for essays: 16-18px, generous line-height, live word counter that turns accent when within 10% of the limit and stays accent (not red-only) when over, with the words "over by N".
 
 **Cards.** Flat, 1px border, no shadows. Hover: border to accent, 2px upward translate, 240ms quart-out.
 
-**Badges.** `Verified` (acacia), `Unverified` (saffron outline with a warning mark), `Indicative` (dashed outline). Always include text.
+**Badges.** `Verified` (check mark, neutral fill), `Unverified` (saffron outline with a warning mark), `Indicative` (dashed outline). Always include text.
 
 **Score visual.** Rubric bars (horizontal, thin 6px) filling on enter, with the numeric score in tabular mono. The five-axis radar is optional; bars are the default because they are more legible on phones.
 
@@ -297,21 +291,28 @@ Rules: dynamic-import everything below the fold (simulator, editor, charts), laz
 ## 12. Implementation notes
 
 - Stack: Next.js 14 App Router, Tailwind 3.4, Framer Motion, Lenis. Extend the existing `tailwind.config.ts`; do not fight it.
-- Replace the current palette (`canvas`, `savannah`, `safari`, `crimson`, `parchment`) with the tokens in Section 4. Map them in `tailwind.config.ts` as `ink`, `bone`, `acacia`, `murram`, `saffron`, `phosphor`, `screen` and remove the old names once nothing uses them.
-- Tokens live as CSS variables in `app/globals.css`; Tailwind colours reference them (`rgb(var(--ink) / <alpha-value>)`) so chapter switching is one class on a section wrapper (`data-chapter="acacia"`).
-- Suggested structure:
+- Tokens are in `tailwind.config.ts` and `app/globals.css` (done). Use the chapter tokens (`bg-bg`, `text-fg`, `text-fg2`, `bg-accent`, `border-line`, ...) in components and never raw hex, so a component works in every chapter.
+- Tokens live as CSS variables in `app/globals.css`; Tailwind colours reference them (`rgb(var(--ink) / <alpha-value>)`) so chapter switching is one attribute on a section wrapper (`<ScrollChapter chapter="dark">`).
+- Structure (landing parts are built; `dashboard/` is Sandra's):
 
 ```
 components/
-  ui/            Button, Input, Textarea, Badge, Card, Toast, Skeleton
-  motion/        Reveal, SplitLines, Odometer, ScrollChapter, MagneticButton
-  landing/       Hero, Crossing, ToolsIndex, UssdSection, EssaysSection, CueRadar, Proof, Footer
-  dashboard/     Shell, ContextCard, GuideStepper, MatchColumns, AidList, EssayPicker, EssayEditor, ReviewPanel, LorForm
-  ussd/          Phone, Keypad, RequestLog
+  ui/            Button, Input, Textarea, Badge, Card, Toast, Skeleton          (built)
+  motion/        Reveal, SplitLines, Odometer, ScrollChapter, Magnetic,         (built)
+                 SmoothScroll, MotionProvider, useLiteMotion
+  landing/       Nav, Hero, HeroPhone, Crossing, RouteArc, Tools, GpaCard,      (built)
+                 UssdSection, EssaysSection, CueRadar, Proof, Footer, Countdown, OfflineBanner
+  ussd/          Phone, UssdSimulator                                           (built)
+  dashboard/     Shell, ContextCard, GuideStepper, MatchColumns, AidList,
+                 EssayPicker, EssayEditor, ReviewPanel, LorForm                 (to do)
 lib/
   motion.ts      easing + duration tokens
   strings.ts     en / sw
+  kcse-scale.ts, fixtures/essays.ts   offline copies for demos and for building UI before the API
 ```
+
+- Framer Motion runs through `LazyMotion` (`m.*` components, `domAnimation` only). Use `m`, not `motion`, to keep the bundle small.
+- `useLiteMotion()` is true for `prefers-reduced-motion` and Save-Data. Every motion component renders its end state when it is true.
 
 - Use the types in `lib/types.ts` for every data prop so the UI and API stay in sync.
 - Hand-off rule from AGENTS.md applies: log every file you add or change in the mutation log.
@@ -322,10 +323,10 @@ lib/
 
 | Category | Weight | Target | How |
 |---|---|---|---|
-| Typography | 25% | 9 | Fraunces at 190px numerals, 10:1+ scale, weight-on-hover |
+| Typography | 25% | 9 | Geist at up to 320px numerals, 10:1+ scale, tight tracking |
 | Composition | 25% | 9 | Bleeding numeral, asymmetric grid, index-list instead of card grid |
 | Motion | 20% | 9 | The Crossing, choreographed load, custom easing, reduced-motion parity |
-| Colour | 15% | 9 | Murram/acacia/bone chapters, nothing generic |
+| Colour | 15% | 9 | Alternating ink/snow/paper/wash chapters, one accent, gradient on one word |
 | Details | 15% | 9 | Honest badges, designed empty/error/404, numeric USSD simulator with request log |
 
 Weighted target: 9.0. The gap to 10 is the Crossing's polish and real-device performance, which can only be judged after build.

@@ -1,39 +1,33 @@
-import React from 'react';
-import Navbar from '@/components/Navbar';
-import HeroBanner from '@/components/HeroBanner';
-import AOReviewStudio from '@/components/AOReviewStudio';
-import USSDPhoneSimulator from '@/components/USSDPhoneSimulator';
-import VoiceStudio from '@/components/VoiceStudio';
-import CollegeMatcher from '@/components/CollegeMatcher';
-import CUERadar from '@/components/CUERadar';
-import Footer from '@/components/Footer';
+import { Nav } from '@/components/landing/nav';
+import { Hero } from '@/components/landing/hero';
+import { Crossing } from '@/components/landing/crossing';
+import { Tools } from '@/components/landing/tools';
+import { UssdSection } from '@/components/landing/ussd-section';
+import { EssaysSection } from '@/components/landing/essays-section';
+import { CueRadar } from '@/components/landing/cue-radar';
+import { Proof } from '@/components/landing/proof';
+import { Footer } from '@/components/landing/footer';
+import { SmoothScroll } from '@/components/motion/smooth-scroll';
 
+/**
+ * Landing page, eight chapters (DESIGN.md 7.1):
+ * hero (light) > the Crossing (dark) > tools (paper) > phone (dark) > essays (light) > safety (wash) > proof (paper) > footer (dark)
+ */
 export default function Home() {
   return (
-    <main className="min-h-screen bg-canvas text-parchment flex flex-col selection:bg-savannah-500 selection:text-canvas">
-      {/* 1. Header with Urgent 72h EA Countdown Ticker */}
-      <Navbar />
-
-      {/* 2. Monumental Hero Section */}
-      <HeroBanner />
-
-      {/* 3. Gemini Admissions Officer Roast Studio */}
-      <AOReviewStudio />
-
-      {/* 4. Africa's Talking USSD Interactive Phone Simulator */}
-      <USSDPhoneSimulator />
-
-      {/* 5. Africa's Talking Voice Studio (Mock Interview) */}
-      <VoiceStudio />
-
-      {/* 6. KCSE to US 4.0 GPA & 100% Aid College Matcher */}
-      <CollegeMatcher />
-
-      {/* 7. Commission for University Education (CUE) Scam Agency Blacklist */}
-      <CUERadar />
-
-      {/* 8. Comprehensive Architecture & Heritage Footer */}
+    <>
+      <SmoothScroll />
+      <Nav />
+      <main id="main">
+        <Hero />
+        <Crossing />
+        <Tools />
+        <UssdSection />
+        <EssaysSection />
+        <CueRadar />
+        <Proof />
+      </main>
       <Footer />
-    </main>
+    </>
   );
 }
