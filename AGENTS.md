@@ -236,13 +236,13 @@ Dial `*384*73732#`. Every answer is digits. `0` is always Back, `00` is always H
 
 ```
 (root)  Karibu Pepea
-  1. Apply guide        -> list steps (paged, 4 per screen, 8 = Next) -> N: step summary + "1. Done 0. Back"
+  1. Apply guide        -> list steps (paged, 4 per screen, 8/9 = Next) -> step summary with progression (1. Next step 1->12, 12: Finish & SMS Guide, 0. Back)
   2. KCSE to US GPA     -> grade list (codes 1-12 from kcse_grade_scale, paged) -> result + SMS
-  3. Colleges for me    -> needs profile (grade, major code) -> up to 3 matches -> "1. SMS me the list"
-  4. Financial aid      -> 1. Full aid needed  2. Partial  -> top 3 programs -> "1. SMS me the list"
+  3. Colleges for me    -> needs profile (grade, major code) -> top matches (1-3: detail, 4: SMS me the list, 0: Back)
+  4. Financial aid      -> 1. Full aid needed  2. Partial  -> top programs (1-3: detail, 4: SMS me details, 0: Back)
   5. Essays             -> 1. Essay types (codes from essay_types) -> tips + SMS
                            2. Schools (paged list) -> prompts for that school -> SMS
-  6. Deadlines          -> next 3 deadlines for my list
+  6. Deadlines          -> next 3 deadlines (1-3: detail, 4: SMS me deadlines, 0: Back)
   7. My profile         -> 1. Set KCSE grade  2. Set major (code)  3. Aid need  4. Get WhatsApp link
   8. Verify agency      -> numbered CUE list (paged) -> detail  (replaces free-text search)
   9. More               -> 1. Mock interview call  2. Help
@@ -397,6 +397,8 @@ Add a row for every new prompt or heuristic and bump the version string on any e
 | 2026-10-29 | Sandra and Claude | MODIFY | `tailwind.config.ts`, `app/globals.css` | `text-dash` and `text-stat` sizes, `dash-ambient`, `dash-enter`, `panel-edge`, styled range slider |
 | 2026-10-29 | Sandra and Claude | MODIFY | `app/not-found.tsx`, `app/error.tsx`, `components/landing/nav.tsx` | Import `Mark` from its own module |
 | 2026-10-29 | Sandra and Claude | MODIFY | `AGENTS.md`, `DESIGN.md` | Dashboard rework notes and design system (7.2, 7.3), file log |
+| 2026-10-29 | Geoffrey | MODIFY | `app/api/at/ussd/route.ts`, `app/api/at/whatsapp/route.ts` | Numbered options 1-4 downwards for colleges, aid, and deadlines; added continuous 12-step application roadmap progression with SMS delivery |
+| 2026-10-29 | Geoffrey | CREATE | `scripts/test-ussd-progression.ts` | 75-assertion integration test suite validating step 1-12 progression and downward 1-4 option numbering |
 
 ---
 

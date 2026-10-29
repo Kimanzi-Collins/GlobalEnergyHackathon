@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { parseATForm } from '@/lib/parse-at-webhook';
-import { sendWhatsAppMessage } from '@/lib/at';
+import { sendWhatsApp as sendWhatsAppMessage } from '@/lib/at';
 import { verifyWebhookSecret } from '@/lib/webhook-auth';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { normalizeKenyanPhone } from '@/lib/phone';
