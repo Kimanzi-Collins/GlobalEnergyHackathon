@@ -2,6 +2,7 @@ import { geminiAI } from '@/lib/at-supabase';
 import { buildSystemPrompt } from '@/lib/prompts/system-prompt';
 import type { Channel, ModuleKey, StudentContext } from '@/lib/types';
 import type { z } from 'zod';
+import { logAiCall } from '@/lib/ai-telemetry';
 
 const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
@@ -32,15 +33,16 @@ export interface CallGeminiResult<T = any> {
 }
 
 /**
- * Executes a call to Google Gemini 2.5 Flash with timeout, retry,
- * and JSON parsing with schema validation.
+ * Executes a call to Google Gemini 3.5 Flash with timeout, retry,
+ * and JSON parsing with schema validation and repair retry.
  */
 export async function callGemini<T = any>(
   options: CallGeminiOptions<T>
 ): Promise<CallGeminiResult<T>> {
   const { module, channel, context, verifiedData, userInput, json = false, schema } = options;
+  const startTime = Date.now();
 
-  // Build the system prompt
+  // Build the system prompt using centralized systemInstruction
   const systemInstruction = buildSystemPrompt({
     module,
     channel,
@@ -58,7 +60,19 @@ export async function callGemini<T = any>(
   // If Gemini client is not initialized or key is placeholder
   if (!geminiAI || isPlaceholderKey) {
     if (isDemoMode) {
-      return getDemoFallback<T>(module, userInput, json);
+      const fallback = getDemoFallback<T>(module, userInput, json);
+      await logAiCall({
+        module,
+        channel,
+        model: 'gemini-3.5-flash-mock',
+        durationMs: Date.now() - startTime,
+        promptTokensEstimate: Math.round(userInput.length / 4),
+        completionTokensEstimate: Math.round(fallback.text.length / 4),
+        costUsdEstimate: 0,
+        studentPhone: context?.profile?.phoneNumber,
+        success: true,
+      });
+      return fallback;
     }
     const err = new Error('Gemini client not initialized: missing valid GEMINI_API_KEY');
     (err as any).code = 'UPSTREAM_AI';
@@ -66,13 +80,13 @@ export async function callGemini<T = any>(
   }
 
   const model = geminiAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.5-flash',
     systemInstruction,
     generationConfig: json ? { responseMimeType: 'application/json' } : undefined,
   });
 
   // Helper to execute single generation with 8s timeout
-  async function attemptCall(): Promise<string> {
+  async function attemptCall(input: string): Promise<string> {
     let timer: NodeJS.Timeout;
     const timeoutPromise = new Promise<never>((_, reject) => {
       timer = setTimeout(() => {
@@ -82,7 +96,7 @@ export async function callGemini<T = any>(
 
     try {
       const response = await Promise.race([
-        model.generateContent(userInput),
+        model.generateContent(input),
         timeoutPromise,
       ]);
       clearTimeout(timer!);
@@ -99,20 +113,32 @@ export async function callGemini<T = any>(
   // Try call with 1 retry (2 attempts total)
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      textResponse = await attemptCall();
+      textResponse = await attemptCall(userInput);
       break;
     } catch (err) {
       lastError = err;
       if (attempt === 1) {
         console.warn(`[Gemini] Attempt 1 failed (${(err as Error).message}), retrying...`);
-        // Brief pause before retry
         await new Promise((res) => setTimeout(res, 300));
       }
     }
   }
 
-  // Handle failure
+  // Handle network / upstream failure
   if (!textResponse) {
+    await logAiCall({
+      module,
+      channel,
+      model: 'gemini-3.5-flash',
+      durationMs: Date.now() - startTime,
+      promptTokensEstimate: Math.round(userInput.length / 4),
+      completionTokensEstimate: 0,
+      costUsdEstimate: 0,
+      studentPhone: context?.profile?.phoneNumber,
+      success: false,
+      errorMessage: lastError?.message,
+    });
+
     if (isDemoMode) {
       console.warn('[Gemini] Live call failed in demo mode, returning fallback:', lastError?.message);
       return getDemoFallback<T>(module, userInput, json);
@@ -123,30 +149,53 @@ export async function callGemini<T = any>(
     throw err;
   }
 
-  // If not JSON, return text
+  // If not JSON, return text directly
   if (!json) {
+    await logAiCall({
+      module,
+      channel,
+      model: 'gemini-3.5-flash',
+      durationMs: Date.now() - startTime,
+      promptTokensEstimate: Math.round(userInput.length / 4),
+      completionTokensEstimate: Math.round(textResponse.length / 4),
+      costUsdEstimate: (userInput.length / 4 * 0.075 / 1000000) + (textResponse.length / 4 * 0.3 / 1000000),
+      studentPhone: context?.profile?.phoneNumber,
+      success: true,
+    });
     return { text: textResponse };
   }
 
-  // Parse JSON
-  let parsed: any;
-  try {
-    // Strip markdown code fences if model enclosed JSON
-    let cleaned = textResponse.trim();
+  // Helper to safely parse JSON from model output
+  function extractJson(raw: string): any {
+    let cleaned = raw.trim();
     if (cleaned.startsWith('```json')) {
       cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
     } else if (cleaned.startsWith('```')) {
       cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
     }
-    parsed = JSON.parse(cleaned);
+    return JSON.parse(cleaned);
+  }
+
+  let parsed: any;
+  try {
+    parsed = extractJson(textResponse);
   } catch (parseErr) {
-    if (isDemoMode) {
-      return getDemoFallback<T>(module, userInput, json);
+    // Attempt 1 JSON repair retry
+    try {
+      console.warn('[Gemini] JSON parse error, attempting schema repair prompt...');
+      const repairPrompt = `The previous response failed JSON parsing. Fix it into strictly valid JSON matching the schema with no conversational text:\n\n${textResponse}`;
+      const repairedText = await attemptCall(repairPrompt);
+      parsed = extractJson(repairedText);
+      textResponse = repairedText;
+    } catch {
+      if (isDemoMode) {
+        return getDemoFallback<T>(module, userInput, json);
+      }
+      const err = new Error(`Gemini returned invalid JSON: ${(parseErr as Error).message}`);
+      (err as any).code = 'UPSTREAM_AI';
+      (err as any).details = { rawResponse: textResponse };
+      throw err;
     }
-    const err = new Error(`Gemini returned invalid JSON: ${(parseErr as Error).message}`);
-    (err as any).code = 'UPSTREAM_AI';
-    (err as any).details = { rawResponse: textResponse };
-    throw err;
   }
 
   // Schema validation
@@ -161,8 +210,33 @@ export async function callGemini<T = any>(
       (err as any).details = { validationIssues: valResult.error.issues, parsed };
       throw err;
     }
+
+    await logAiCall({
+      module,
+      channel,
+      model: 'gemini-3.5-flash',
+      durationMs: Date.now() - startTime,
+      promptTokensEstimate: Math.round(userInput.length / 4),
+      completionTokensEstimate: Math.round(textResponse.length / 4),
+      costUsdEstimate: (userInput.length / 4 * 0.075 / 1000000) + (textResponse.length / 4 * 0.3 / 1000000),
+      studentPhone: context?.profile?.phoneNumber,
+      success: true,
+    });
+
     return { text: textResponse, data: valResult.data };
   }
+
+  await logAiCall({
+    module,
+    channel,
+    model: 'gemini-3.5-flash',
+    durationMs: Date.now() - startTime,
+    promptTokensEstimate: Math.round(userInput.length / 4),
+    completionTokensEstimate: Math.round(textResponse.length / 4),
+    costUsdEstimate: (userInput.length / 4 * 0.075 / 1000000) + (textResponse.length / 4 * 0.3 / 1000000),
+    studentPhone: context?.profile?.phoneNumber,
+    success: true,
+  });
 
   return { text: textResponse, data: parsed as T };
 }
@@ -262,7 +336,14 @@ function getDemoFallback<T>(module: ModuleKey, userInput: string, json: boolean)
 
   if (module === 'advisor') {
     return {
-      text: 'Based on your academic profile and full-aid requirements, we have prioritized schools that meet 100% of demonstrated need for international students. Your reach, target, and likely matches reflect the competitive holistic admissions landscape for East African candidates.',
+      text: 'Pepea Advisory: Admission to top US universities is never guaranteed. US admissions committees use holistic review, evaluating academics, extracurricular impact, essays, and recommendation letters. We classify institutions as reach, target, or likely based on your profile and aid needs, but no score guarantees admission.',
+      data: undefined,
+    };
+  }
+
+  if (module === 'cue') {
+    return {
+      text: 'Pepea Security Alert: Never pay any agency or third party to submit your Common App or guarantee admission. Common App submission and fee waivers are 100% free. Verified EducationUSA advising is free. Always check suspicious entities against our CUE blacklist radar.',
       data: undefined,
     };
   }

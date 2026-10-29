@@ -215,3 +215,14 @@ export async function makeVoiceCall(options: MakeVoiceCallOptions): Promise<any>
     "Africa's Talking Voice client not configured. Set AT_API_KEY and AT_USERNAME in .env.local"
   );
 }
+
+// Backward-compatible client objects matching at-supabase.ts
+export const atSMS = {
+  send: (options: { to: string[]; message: string; from?: string }) =>
+    sendSms({ to: options.to, message: options.message, from: options.from }),
+};
+
+export const atVoice = {
+  call: (options: { callFrom: string; callTo: string[] }) =>
+    makeVoiceCall(options),
+};

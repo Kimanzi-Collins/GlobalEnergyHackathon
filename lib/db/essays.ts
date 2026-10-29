@@ -908,3 +908,7 @@ export async function getEssayWithHistory(
     latestReview,
   };
 }
+
+export async function getAllEssayTypes(): Promise<EssayType[]> {
+  return DEFAULT_ESSAY_TYPES;
+}
