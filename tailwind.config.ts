@@ -9,6 +9,35 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        ink: {
+          DEFAULT: '#12110E',
+          surface: '#1C1A16',
+          elevated: '#24211C',
+          border: 'rgba(244, 239, 228, 0.14)',
+        },
+        bone: {
+          DEFAULT: '#F4EFE4',
+          2: '#E9E2D2',
+          muted: 'rgba(18, 17, 14, 0.62)',
+          subtle: 'rgba(18, 17, 14, 0.12)',
+        },
+        acacia: {
+          DEFAULT: '#1E3B2A',
+          light: '#2A523A',
+          dark: '#14271C',
+        },
+        murram: {
+          DEFAULT: '#B8431F',
+          light: '#D3532B',
+          dark: '#8E3316',
+        },
+        saffron: {
+          DEFAULT: '#E8A83A',
+          light: '#F0BA5C',
+          dark: '#C78B24',
+        },
+        phosphor: '#8CF2A6',
+        screen: '#07130B',
         canvas: {
           DEFAULT: '#07080B',
           subtle: '#0F1117',
@@ -40,8 +69,9 @@ const config: Config = {
         },
       },
       fontFamily: {
+        fraunces: ['Fraunces', 'serif'],
         display: ['Space Grotesk', 'sans-serif'],
-        editorial: ['Instrument Serif', 'serif'],
+        editorial: ['Fraunces', 'Instrument Serif', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       transitionTimingFunction: {

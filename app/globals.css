@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,7 +6,16 @@
 
 :root {
   --font-display: 'Space Grotesk', sans-serif;
-  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-serif: 'Fraunces', 'Instrument Serif', Georgia, serif;
+  --font-fraunces: 'Fraunces', serif;
+  --ink: #12110E;
+  --bone: #F4EFE4;
+  --bone-2: #E9E2D2;
+  --acacia: #1E3B2A;
+  --murram: #B8431F;
+  --saffron: #E8A83A;
+  --phosphor: #8CF2A6;
+  --screen: #07130B;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
