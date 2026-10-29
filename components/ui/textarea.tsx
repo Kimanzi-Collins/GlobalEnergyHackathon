@@ -2,8 +2,8 @@ import { forwardRef, useId } from 'react';
 import { cn } from '@/lib/utils';
 import { FieldShell, fieldClasses } from './input';
 
-interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  label: string;
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string;
   hint?: string;
   error?: string;
   /** When set, shows a live word count against this limit. */
@@ -26,7 +26,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
   const auto = useId();
   const fieldId = id ?? auto;
   const words = typeof value === 'string' ? countWords(value) : 0;
-  const near = wordLimit ? words >= wordLimit * 0.9 : false;
+  const near = wordLimit ? words >= wordLimit * 0.9 && words <= wordLimit : false;
   const over = wordLimit ? words > wordLimit : false;
 
   return (
@@ -37,11 +37,11 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
         value={value}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${fieldId}-error` : hint ? `${fieldId}-hint` : undefined}
-        className={cn(fieldClasses, 'min-h-[160px] resize-y py-3 leading-relaxed', error && 'ring-accent', className)}
+        className={cn(fieldClasses, 'min-h-[160px] resize-y py-3.5 leading-relaxed font-sans text-base', error && 'ring-accent', className)}
         {...props}
       />
       {wordLimit ? (
-        <p className={cn('tnum mt-2 text-right text-sm', near ? 'font-medium text-accent' : 'text-fg2')} aria-live="polite">
+        <p className={cn('tnum mt-1.5 text-right text-xs font-mono', over ? 'font-bold text-accent' : near ? 'font-medium text-accent' : 'text-fg2')} aria-live="polite">
           {over ? `${words} words, over by ${words - wordLimit}` : `${words} / ${wordLimit} words`}
         </p>
       ) : null}

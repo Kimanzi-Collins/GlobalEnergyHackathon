@@ -191,7 +191,7 @@ Read `DESIGN.md` fully first. Use the types in `lib/types.ts` for every API prop
 | FE-S-09 | P1 | Dashboard home: next-deadline countdown, guide progress ring, asymmetric module grid, designed empty states | FE-S-03 to 08 | `[/]` Sandra |
 | FE-S-10 | P2 | Realtime: subscribe to `essay_versions`, `lor_reviews`, `conversation_messages` for the signed-in student | BE-DB-01 | `[ ]` |
 | FE-S-11 | P2 | WhatsApp transcript view inside the context page | BE-API-10 | `[ ]` |
-| FE-S-12 | P1 | **Converge the two UI kits.** The dashboard has its own kit in `components/dashboard/ui/` (Button, Card, Badge, Input, Textarea) with different prop names from `components/ui/`. Move the dashboard onto `components/ui/` and the chapter tokens (`bg-bg`, `text-fg`, `bg-accent`), then delete `components/dashboard/ui/` and the legacy aliases in `tailwind.config.ts` (`ink-surface`, `bone`, `acacia`, ...) | FE-S-01 to 09 | `[ ]` |
+| FE-S-12 | P1 | **Converge the two UI kits.** The dashboard has its own kit in `components/dashboard/ui/` (Button, Card, Badge, Input, Textarea) with different prop names from `components/ui/`. Move the dashboard onto `components/ui/` and the chapter tokens (`bg-bg`, `text-fg`, `bg-accent`), then delete `components/dashboard/ui/` and the legacy aliases in `tailwind.config.ts` (`ink-surface`, `bone`, `acacia`, ...) | FE-S-01 to 09 | `[x]` Sandra |
 
 **Sandra status notes (scaffold merged via PR #4, 2026-10-29; logged here by Claude because the merge dropped the log)**
 
@@ -346,6 +346,7 @@ Add a row for every new prompt or heuristic and bump the version string on any e
 | 2026-10-29 | Claude (for Collins) | MODIFY | `components/ui/{badge,button,card,input,textarea}.tsx` | Merge fix: restored Collins's kit under lowercase names; removed the capitalised duplicates from the index |
 | 2026-10-29 | Claude (for Collins) | MODIFY | `lib/types.ts` | Doc comment: `kenyanContextTips` is one tip per line |
 | 2026-10-29 | Claude (for Collins) | MODIFY | `AGENTS.md` | Rule 9, FE-S statuses, FE-S-12, merge-fix notes, open items |
+| 2026-10-29 | Sandra | CONVERGE | `components/ui/*`, `app/dashboard/*` | FE-S-12 complete: converged all dashboard modules onto canonical components/ui/ and chapter tokens, deleted components/dashboard/ui/, linked landing CTAs to /dashboard |
 
 ---
 
@@ -357,5 +358,5 @@ Add a row for every new prompt or heuristic and bump the version string on any e
 4. **Verified data:** seed rows are unverified until BE-DB-05 is done.
 5. **Kiswahili:** designed for, not translated.
 6. **Merge incident (2026-10-29): what to do differently.** PR #4 merged with no textual conflict markers and still broke `master` (case-colliding filenames, dropped design tokens, 17 type errors, no `AGENTS.md` update). A clean git merge is not proof that the app works. Before any push to `master`: `git pull`, `npx tsc --noEmit`, `npx next build`. (Team)
-7. **Two UI kits until FE-S-12 lands.** `components/ui/` (Collins) and `components/dashboard/ui/` (Sandra) are intentionally separate for now. Do not add a file to one that differs only by case from a file in the other. (Sandra, Collins)
+7. **Converged UI kit (FE-S-12 done).** `components/ui/` is now the single unified kit across landing and dashboard. `components/dashboard/ui/` has been removed. (Sandra)
 8. **Duplicate fixtures.** `lib/fixtures/essays.ts` (landing) and `lib/fixtures/index.ts` (dashboard) both describe essay types and schools. Consolidate when the API routes replace them (BE-API-04). (Sandra, Collins)

@@ -11,23 +11,23 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { mockAidMatches, mockAidPrograms } from '@/lib/fixtures';
-import { Badge } from '@/components/dashboard/ui/Badge';
-import { Card } from '@/components/dashboard/ui/Card';
-import { Button } from '@/components/dashboard/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function FinancialAidPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line/10">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-saffron uppercase tracking-widest mb-1">
+          <div className="flex items-center gap-2 text-xs font-mono text-accent uppercase tracking-widest mb-1">
             <Coins className="w-3.5 h-3.5" />
             <span>Need-Based &amp; Merit Scholarships</span>
           </div>
-          <h1 className="font-fraunces text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-bone">
+          <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-fg">
             Financial Aid Scout
           </h1>
-          <p className="text-sm font-display text-bone-muted mt-1 max-w-2xl">
+          <p className="text-sm text-fg2 mt-1 max-w-2xl">
             Ranked grant and fee waiver opportunities matched to your household income profile. Over $0 applications with Common App waivers and full-need institutional grants.
           </p>
         </div>
@@ -37,57 +37,57 @@ export default function FinancialAidPage() {
         {mockAidMatches.map((m) => {
           const prog = m.program;
           return (
-            <Card key={prog.id} className="bg-ink-surface border-white/10 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
+            <Card key={prog.id} className="bg-surface ring-1 ring-inset ring-line/10 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-line/10">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-editorial text-2xl font-bold text-bone">
+                    <h3 className="font-editorial text-2xl font-bold text-fg">
                       {prog.name}
                     </h3>
                     {prog.dataVerifiedAt ? (
-                      <Badge variant="verified">Verified</Badge>
+                      <Badge kind="verified">Verified</Badge>
                     ) : (
-                      <Badge variant="unverified">Unverified</Badge>
+                      <Badge kind="unverified">Unverified</Badge>
                     )}
                   </div>
-                  <p className="text-xs font-mono text-bone-muted">
+                  <p className="text-xs font-mono text-fg2">
                     Provider: {prog.provider} • Scope:{' '}
-                    <span className="text-saffron capitalize">
+                    <span className="text-accent capitalize">
                       {prog.programType.replace('_', ' ')}
                     </span>
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-bone-muted">Match Fit:</span>
-                  <span className="text-xl font-fraunces font-bold text-saffron">
+                  <span className="text-xs font-mono text-fg2">Match Fit:</span>
+                  <span className="text-xl font-editorial font-bold text-accent">
                     {m.matchScore}%
                   </span>
                 </div>
               </div>
 
               {/* Eligibility & Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-display">
-                <div className="space-y-1.5 p-3 rounded-lg bg-ink/50 border border-white/5">
-                  <span className="font-mono text-bone-muted uppercase text-[10px] block">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="space-y-1.5 p-3 rounded-2xl bg-bg/50 ring-1 ring-inset ring-line/10">
+                  <span className="font-mono text-fg2 uppercase text-[10px] block">
                     Eligibility &amp; Coverage
                   </span>
-                  <p className="text-bone leading-relaxed">{prog.eligibilityMd}</p>
+                  <p className="text-fg leading-relaxed">{prog.eligibilityMd}</p>
                   {prog.coversFullCost && (
-                    <span className="inline-block mt-1 text-[10px] font-mono px-2 py-0.5 rounded bg-acacia/30 text-[#8CF2A6] border border-acacia">
+                    <span className="inline-block mt-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-acacia/30 text-[#8CF2A6] ring-1 ring-inset ring-acacia/50">
                       Covers Full Cost of Attendance (100% Need)
                     </span>
                   )}
                 </div>
 
-                <div className="space-y-1.5 p-3 rounded-lg bg-ink/50 border border-white/5">
-                  <span className="font-mono text-bone-muted uppercase text-[10px] block">
+                <div className="space-y-1.5 p-3 rounded-2xl bg-bg/50 ring-1 ring-inset ring-line/10">
+                  <span className="font-mono text-fg2 uppercase text-[10px] block">
                     Application Process &amp; Forms
                   </span>
-                  <p className="text-bone-muted leading-relaxed">
+                  <p className="text-fg2 leading-relaxed">
                     {prog.howToApplyMd || 'Submit with regular college application materials.'}
                   </p>
-                  <p className="text-[11px] font-mono text-saffron pt-1">
+                  <p className="text-[11px] font-mono text-accent pt-1">
                     CSS Profile Required:{' '}
                     {prog.requiresCssProfile ? 'Yes' : 'No (Institution or Common App only)'}
                   </p>
@@ -95,11 +95,11 @@ export default function FinancialAidPage() {
               </div>
 
               {/* Footer Links & Deadlines */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5 text-xs font-mono">
-                <div className="flex items-center gap-4 text-bone-muted">
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-line/10 text-xs font-mono">
+                <div className="flex items-center gap-4 text-fg2">
                   {prog.deadline ? (
                     <span className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-saffron" />
+                      <Calendar className="w-3.5 h-3.5 text-accent" />
                       Deadline: {prog.deadline}
                     </span>
                   ) : (
@@ -112,7 +112,7 @@ export default function FinancialAidPage() {
                     href={prog.officialUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-saffron hover:underline"
+                    className="inline-flex items-center gap-1 text-accent hover:underline"
                   >
                     Official Portal <ExternalLink className="w-3.5 h-3.5" />
                   </a>
