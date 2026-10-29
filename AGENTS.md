@@ -390,6 +390,7 @@ Add a row for every new prompt or heuristic and bump the version string on any e
 | 2026-10-29 | Sandra and Claude | MODIFY | `tailwind.config.ts`, `app/globals.css` | `text-dash` and `text-stat` sizes, `dash-ambient`, `dash-enter`, `panel-edge`, styled range slider |
 | 2026-10-29 | Sandra and Claude | MODIFY | `app/not-found.tsx`, `app/error.tsx`, `components/landing/nav.tsx` | Import `Mark` from its own module |
 | 2026-10-29 | Sandra and Claude | MODIFY | `AGENTS.md`, `DESIGN.md` | Dashboard rework notes and design system (7.2, 7.3), file log |
+| 2026-10-29 | Antigravity | MODIFY | `package.json` | Resolved git merge conflict markers in dependencies (kept both geist/lenis and zod/tailwind-merge) |
 
 ---
 
