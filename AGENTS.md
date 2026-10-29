@@ -55,6 +55,7 @@ Shared: end-to-end review (section 9) and demo rehearsal.
 - [x] USSD handler (`/api/at/ussd`), SMS dispatcher, AO essay review route, WhatsApp webhook stub, CUE radar data, landing page with simulator.
 - [x] 2026-10-29: Voice teacher-recommendation flow removed (`process-teacher-rec`, `voice/branch`, VoiceStudio tab, USSD branch, schema value).
 - [x] 2026-10-29: Numeric USSD code introduced (`lib/constants.ts`) and applied to the route, simulator, navbar, hero, footer.
+- [x] 2026-10-29: Collins' frontend foundation: design tokens, UI kit, motion kit, landing page with The Crossing, numeric USSD simulator, 404/error/offline (FE-C-01 to FE-C-07).
 - [x] 2026-10-29: Module schema `02_pepea_modules.sql`, seed `seed_02_modules.sql`, shared types `lib/types.ts`, Gemini system prompt, `DESIGN.md`.
 
 Everything below is **not started**.
@@ -155,14 +156,24 @@ Read `DESIGN.md` fully first. Use the types in `lib/types.ts` for every API prop
 
 | ID | P | Task | Status |
 |---|---|---|---|
-| FE-C-01 | P0 | Design tokens: replace palette and fonts in `tailwind.config.ts` and `app/globals.css` with `DESIGN.md` section 3 and 4 tokens, `next/font` setup for Fraunces, Space Grotesk, JetBrains Mono | `[ ]` |
-| FE-C-02 | P0 | UI kit in `components/ui/`: Button (magnetic), Input, Textarea, Badge (Verified / Unverified / Indicative), Card, Toast, Skeleton, with focus and error states | `[ ]` |
-| FE-C-03 | P0 | Motion kit in `components/motion/`: Reveal, SplitLines, Odometer, ScrollChapter (colour shifts), reduced-motion and Save-Data parity | `[ ]` |
-| FE-C-04 | P1 | Landing page sections 1 to 8 per `DESIGN.md` 7.1, replacing the current single-page section stack. Delete components that become unused | `[ ]` |
-| FE-C-05 | P1 | **The Crossing** signature sequence: pinned scroll, `82/84` to `4.0` odometer, drawn flight route, docked phone. Static fallback | `[ ]` |
-| FE-C-06 | P0 | USSD simulator rebuild: numeric keypad only (digits, `*`, `#`), 182-char counter, request-log drawer, SMS toast, quick-test chips with numeric paths, live calls to `/api/at/ussd` | `[ ]` |
-| FE-C-07 | P2 | 404 page, global error page, offline banner, `lang`/`strings.ts` scaffolding for Kiswahili | `[ ]` |
-| FE-C-08 | P1 | Performance pass: Lighthouse 90+, LCP under 2.5s on Slow 4G, JS under 170 KB, test on a real low-end Android | `[ ]` |
+| FE-C-01 | P0 | Design tokens: replace palette and fonts in `tailwind.config.ts` and `app/globals.css` with `DESIGN.md` section 3 and 4 tokens, Geist Sans and Geist Mono through the `geist` package (revised from Fraunces/Space Grotesk when the direction moved to Apple-grade) | `[x]` Collins |
+| FE-C-02 | P0 | UI kit in `components/ui/`: Button (magnetic), Input, Textarea, Badge (Verified / Unverified / Indicative), Card, Toast, Skeleton, with focus and error states | `[x]` Collins |
+| FE-C-03 | P0 | Motion kit in `components/motion/`: Reveal, SplitLines, Odometer, ScrollChapter (colour shifts), reduced-motion and Save-Data parity | `[x]` Collins |
+| FE-C-04 | P1 | Landing page sections 1 to 8 per `DESIGN.md` 7.1, replacing the current single-page section stack. Delete components that become unused | `[x]` Collins |
+| FE-C-05 | P1 | **The Crossing** signature sequence: pinned scroll, `82/84` to `4.0` odometer, drawn flight route, docked phone. Static fallback | `[x]` Collins |
+| FE-C-06 | P0 | USSD simulator rebuild: numeric keypad only (digits, `*`, `#`), 182-char counter, request-log drawer, SMS toast, quick-test chips with numeric paths, live calls to `/api/at/ussd` | `[x]` Collins |
+| FE-C-07 | P2 | 404 page, global error page, offline banner, `lang`/`strings.ts` scaffolding for Kiswahili | `[x]` Collins |
+| FE-C-08 | P1 | Performance pass: Lighthouse 90+, LCP under 2.5s on Slow 4G, JS under 170 KB, test on a real low-end Android | `[/]` Collins |
+
+**Collins status notes (2026-10-29)**
+
+- FE-C-01 to FE-C-07 are done and verified in a real browser (desktop 1440 and mobile 390): no console errors, no horizontal overflow, reduced-motion parity (static Crossing, nothing left hidden), simulator rejects letters, request log shows the raw POST, offline banner, skip link and keyboard.
+- FE-C-08 is **in progress, one item left: a test on a real low-end Android.** Measured on a production build with Lighthouse (mobile, Slow 4G, 4x CPU): Performance 100, Accessibility 100, Best Practices 100, SEO 100, LCP 0.8s, CLS 0.005, TBT 0ms. First Load JS is 136 kB against the 170 kB budget.
+- **Direction change:** DESIGN.md was revised to an Apple-grade look (Geist, ink/snow/paper, murram and saffron accents). Use the chapter tokens (`bg-bg`, `text-fg`, `text-fg2`, `bg-accent`, `border-line`, `bg-surface`) and the UI kit in `components/ui`; do not use raw hex. Wrap dashboard sections in `<ScrollChapter chapter="...">` only if you want chapter colours; otherwise set `data-chapter="light"` on your layout root.
+- Landing calls to action point at on-page anchors (`#phone`, `#tools`) because `/dashboard` does not exist yet. When FE-S-01 ships, change the hero button and the nav button to `/dashboard`.
+- The hero phone is a scripted demo of the **target** menu in section 7. The simulator further down calls the **live** route, which still serves the old menu until BE-AT-02 ships, so the two differ for now.
+- `lib/kcse-scale.ts` and `lib/fixtures/essays.ts` are offline copies of seed data for the landing page. Keep them in sync with `seed_02_modules.sql`, or replace them with API calls (BE-API-02, BE-API-04).
+- Open checks for Sandra: use `Input`, `Textarea` (with `wordLimit`), `Badge kind="unverified"`, `Skeleton` and `useToast()` from the kit so the dashboard matches.
 
 ### 6.2 Sandra: dashboard and modules
 
@@ -296,6 +307,17 @@ Add a row for every new prompt or heuristic and bump the version string on any e
 | 2026-10-29 | Claude (for Collins) | CREATE | `lib/prompts/system-prompt.ts` | `PEPEA_SYSTEM_V1` |
 | 2026-10-29 | Claude (for Collins) | CREATE | `DESIGN.md` | Design system and storyboard |
 | 2026-10-29 | Claude (for Collins) | REWRITE | `AGENTS.md`, `README.md` | Task board and updated project description |
+| 2026-10-29 | Claude (for Collins) | CREATE | `package.json`, `package-lock.json` | Added `geist` (font) and `lenis` (smooth scroll) |
+| 2026-10-29 | Claude (for Collins) | REWRITE | `tailwind.config.ts`, `app/globals.css` | Apple-grade tokens: palette, chapter variables, fluid type scale, easing, keyframes (FE-C-01) |
+| 2026-10-29 | Claude (for Collins) | REWRITE | `app/layout.tsx`, `app/page.tsx` | Geist fonts, providers, skip link, noscript fallback; landing assembled from eight chapters |
+| 2026-10-29 | Claude (for Collins) | CREATE | `app/not-found.tsx`, `app/error.tsx`, `app/global-error.tsx`, `app/icon.svg` | 404 with a route that stops mid-ocean, error boundaries, favicon (FE-C-07) |
+| 2026-10-29 | Claude (for Collins) | CREATE | `components/ui/*` (button, input, textarea, badge, card, toast, skeleton) | UI kit (FE-C-02) |
+| 2026-10-29 | Claude (for Collins) | CREATE | `components/motion/*` (reveal, split-lines, odometer, scroll-chapter, magnetic, smooth-scroll, motion-provider, use-motion-prefs) | Motion kit with reduced-motion and Save-Data parity (FE-C-03) |
+| 2026-10-29 | Claude (for Collins) | CREATE | `components/landing/*` (nav, hero, hero-phone, countdown, crossing, route-arc, tools, gpa-card, ussd-section, essays-section, cue-radar, proof, footer, offline-banner) | Landing page and The Crossing (FE-C-04, FE-C-05, FE-C-07) |
+| 2026-10-29 | Claude (for Collins) | CREATE | `components/ussd/phone.tsx`, `components/ussd/simulator.tsx` | Numeric-only USSD simulator wired to `/api/at/ussd`, request log, 182-character counter (FE-C-06) |
+| 2026-10-29 | Claude (for Collins) | CREATE | `lib/utils.ts`, `lib/motion.ts`, `lib/strings.ts`, `lib/kcse-scale.ts`, `lib/fixtures/essays.ts` | Helpers, motion tokens, en/sw strings, offline copies of seed data |
+| 2026-10-29 | Claude (for Collins) | DELETE | `components/AOReviewStudio.tsx`, `CUERadar.tsx`, `CollegeMatcher.tsx`, `Footer.tsx`, `HeroBanner.tsx`, `Navbar.tsx`, `USSDPhoneSimulator.tsx`, `VoiceStudio.tsx` | Replaced by the new landing components. The essay review UI is now Sandra's FE-S-05; the mock interview voice flow stays on the backend (`/api/at/voice`) with no landing section |
+| 2026-10-29 | Claude (for Collins) | MODIFY | `DESIGN.md` | Revised to the Apple-grade direction; sections 3, 4, 7.1 and 12 updated to match what is built |
 | 2026-10-29 | Geoffrey | CREATE | `lib/phone.ts` | Kenyan phone normalizer to E.164 (BE-LIB-01) |
 | 2026-10-29 | Geoffrey | MODIFY | `lib/at-supabase.ts` | Strict live-mode key validation; throws if missing (BE-DB-04) |
 | 2026-10-29 | Geoffrey | CREATE | `lib/db/` | Typed DB query helpers: client, students, gpa, guide, essays, lor, advisor, aid, chat, facts, cue, index (BE-DB-03, BE-DB-07) |

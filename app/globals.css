@@ -1,108 +1,192 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------
+   Pepea design tokens (DESIGN.md section 4). Values are RGB triplets so
+   Tailwind can apply alpha: rgb(var(--ink) / 0.5)
+   ------------------------------------------------------------------ */
 :root {
-  --font-display: 'Space Grotesk', sans-serif;
-  --font-serif: 'Instrument Serif', Georgia, serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --ink: 11 11 13;
+  --graphite: 29 29 31;
+  --paper: 245 245 247;
+  --snow: 251 251 253;
+  --murram: 166 58 24;
+  --saffron: 242 169 59;
+  --phosphor: 140 242 166;
+  --screen: 7 19 11;
+
+  /* Default chapter: light */
+  --bg: var(--snow);
+  --surface: var(--paper);
+  --fg: var(--graphite);
+  --fg-2: 110 110 115;
+  --line: 29 29 31;
+  --accent: var(--murram);
+  --accent-fg: var(--snow);
+
+  --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-quart-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-expo-in-out: cubic-bezier(0.87, 0, 0.13, 1);
+  --nav-h: 52px;
 }
 
-/* Awwwards Signature Selection Colors */
-::selection {
-  background-color: #F59E0B;
-  color: #07080B;
+/* Chapters: every landing section declares one. Components read only the chapter tokens. */
+[data-chapter='light'] {
+  --bg: var(--snow);
+  --surface: var(--paper);
+  --fg: var(--graphite);
+  --fg-2: 110 110 115;
+  --line: 29 29 31;
+  --accent: var(--murram);
+  --accent-fg: var(--snow);
 }
-
-::-moz-selection {
-  background-color: #F59E0B;
-  color: #07080B;
+[data-chapter='paper'] {
+  --bg: var(--paper);
+  --surface: var(--snow);
+  --fg: var(--graphite);
+  --fg-2: 110 110 115;
+  --line: 29 29 31;
+  --accent: var(--murram);
+  --accent-fg: var(--snow);
+}
+[data-chapter='dark'] {
+  --bg: var(--ink);
+  --surface: var(--graphite);
+  --fg: var(--snow);
+  --fg-2: 161 161 166;
+  --line: 251 251 253;
+  --accent: var(--saffron);
+  --accent-fg: var(--ink);
+}
+[data-chapter='wash'] {
+  --bg: 243 228 220;
+  --surface: 251 241 235;
+  --fg: var(--graphite);
+  --fg-2: 85 78 74;
+  --line: 29 29 31;
+  --accent: 166 58 24;
+  --accent-fg: var(--snow);
 }
 
 html {
-  scroll-behavior: smooth;
-  background-color: #07080B;
-  color: #FAF8F4;
+  background-color: rgb(var(--snow));
+  color: rgb(var(--graphite));
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  font-family: var(--font-display);
-  background-color: #07080B;
-  color: #FAF8F4;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  background-color: rgb(var(--bg));
+  color: rgb(var(--fg));
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'ss01', 'cv11';
 }
 
-/* Custom Minimalist Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Branded selection (per chapter) */
+::selection {
+  background: rgb(var(--accent));
+  color: rgb(var(--accent-fg));
 }
 
-::-webkit-scrollbar-track {
-  background: #07080B;
+/* Focus: visible and on-brand, with an inner ring so it reads on any chapter */
+:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #1F2430;
-  border-radius: 9999px;
+/* Typographic defaults */
+h1, h2, h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+.tnum {
+  font-variant-numeric: tabular-nums;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #F59E0B;
+/* Lenis */
+html.lenis, html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
 }
 
-/* Glassmorphism & Atmospheric Glows */
-.glass-panel {
-  background: rgba(16, 18, 26, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* Hairline scrollbar for inner scroll areas */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--line) / 0.25) transparent;
 }
 
-.glass-panel-glow {
-  background: radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.08) 0%, rgba(16, 18, 26, 0.8) 70%);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+/* Frosted glass used by the nav and floating UI */
+.glass {
+  background: rgb(var(--bg) / 0.72);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
 }
 
-.subtle-border {
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-/* Waveform Audio Visualizer Animation */
-@keyframes wave-bounce {
-  0%, 100% {
-    transform: scaleY(0.15);
-  }
-  50% {
-    transform: scaleY(1);
-  }
-}
-
-.animate-waveform {
-  animation: wave-bounce 1.1s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-  transform-origin: bottom;
-}
-
-/* Retro Telco Screen Scanline */
-.ussd-screen {
-  background: #0D1612;
-  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.85);
+/* Feature-phone LCD */
+.lcd {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(var(--phosphor) / 0.07), transparent 60%),
+    rgb(var(--screen));
+  box-shadow: inset 0 0 22px rgb(0 0 0 / 0.8);
   position: relative;
 }
-
-.ussd-screen::after {
-  content: " ";
-  display: block;
+.lcd::after {
+  content: '';
   position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-  background-size: 100% 4px;
-  z-index: 2;
+  inset: 0;
+  background: linear-gradient(rgb(0 0 0 / 0) 50%, rgb(0 0 0 / 0.22) 50%);
+  background-size: 100% 3px;
   pointer-events: none;
-  opacity: 0.35;
+  opacity: 0.4;
+  border-radius: inherit;
+}
+
+/* Decorative watermark text drawn by a pseudo-element, so it is not part of the readable content */
+.wordmark::before {
+  content: attr(data-wordmark);
+}
+
+/* Skip link */
+.skip-link {
+  position: fixed;
+  left: 16px;
+  top: -64px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgb(var(--ink));
+  color: rgb(var(--snow));
+  font-size: 14px;
+  transition: top 0.3s var(--ease-expo-out);
+}
+.skip-link:focus {
+  top: 12px;
+}
+
+/* Motion safety: reduced motion and Save-Data show the end state, same content.
+   The [data-reveal] rule works before JavaScript runs; useLiteMotion() covers Save-Data. */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
