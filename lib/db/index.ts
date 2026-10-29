@@ -19,3 +19,5 @@ export {
   type SaveConversationMessageParams,
   type ConversationMessage,
 } from './chat';
+export { getAllEssayTypes as getEssayTypes } from './essays';
+export { getKcseGradeScale } from './gpa';

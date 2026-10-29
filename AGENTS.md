@@ -110,13 +110,13 @@ All routes return `ApiError` on failure, validate input (zod recommended), norma
 
 | ID | P | Owner | Task | Status |
 |---|---|---|---|---|
-| BE-AT-01 | P0 | Geoffrey | Register the numeric USSD channel with AT (sandbox first) and set the callback to `/api/at/ussd?secret=...`. Update `USSD_SERVICE_CODE` in `lib/constants.ts` if AT assigns a different code | `[ ]` |
-| BE-AT-02 | P0 | Geoffrey | Rebuild `/api/at/ussd` on the numeric tree in section 7: DB-driven (grade scale, guide steps, essay types, schools), no Gemini, digit-only validation with a re-prompt on bad input (the current code silently defaults invalid grades to A-), pagination for long lists (menu items "8. Next", "0. Back"), screens under 182 chars, response under 3s. Replace the free-text CUE search with a numbered flow | `[ ]` |
-| BE-AT-03 | P1 | Geoffrey | SMS: `lib/sms-templates.ts` with templates under 160 chars each (GPA result, next deadline, guide step, essay score). Delivery-report webhook `/api/at/sms/delivery` | `[ ]` |
+| BE-AT-01 | P0 | Geoffrey | Register the numeric USSD channel with AT (sandbox first) and set the callback to `/api/at/ussd?secret=...`. Update `USSD_SERVICE_CODE` in `lib/constants.ts` if AT assigns a different code | `[x]` |
+| BE-AT-02 | P0 | Geoffrey | Rebuild `/api/at/ussd` on the numeric tree in section 7: DB-driven (grade scale, guide steps, essay types, schools), no Gemini, digit-only validation with a re-prompt on bad input (the current code silently defaults invalid grades to A-), pagination for long lists (menu items "8. Next", "0. Back"), screens under 182 chars, response under 3s. Replace the free-text CUE search with a numbered flow | `[x]` |
+| BE-AT-03 | P1 | Geoffrey | SMS: `lib/sms-templates.ts` with templates under 160 chars each (GPA result, next deadline, guide step, essay score). Delivery-report webhook `/api/at/sms/delivery` | `[x]` |
 | BE-AT-04 | P1 | Esther | WhatsApp live: inbound webhook `/api/at/whatsapp` verifies the secret, normalises the sender, calls `/api/chat`, and **sends the reply through AT's WhatsApp send API**. The existing handler returns the reply in the HTTP response, which AT will not deliver to the student. Confirm the exact request and response format in AT's WhatsApp docs and the sandbox/business-number requirements before building; record anything that blocks live use under section 12 | `[ ]` |
 | BE-AT-05 | P1 | Esther | WhatsApp ergonomics: split replies over 900 characters, quick replies (`ChatResponse.quickReplies`), "STOP" and "HELP" handling, de-duplicate retries by `provider_message_id` | `[ ]` |
-| BE-AT-06 | P2 | Geoffrey | Voice mock interview: replace the hard-coded transcript and scores in `process-interview` with a real recording download, transcription and Gemini scoring (`module: 'interview'`) | `[ ]` |
-| BE-AT-07 | P0 | Geoffrey | Remove `lib/at-supabase.ts` mock paths for live mode (see rule 6), add `GET /api/health` reporting DB, AT and Gemini reachability | `[ ]` |
+| BE-AT-06 | P2 | Geoffrey | Voice mock interview: replace the hard-coded transcript and scores in `process-interview` with a real recording download, transcription and Gemini scoring (`module: 'interview'`) | `[x]` |
+| BE-AT-07 | P0 | Geoffrey | Remove `lib/at-supabase.ts` mock paths for live mode (see rule 6), add `GET /api/health` reporting DB, AT and Gemini reachability | `[x]` |
 
 ### 5.5 AI and prompts (Esther)
 
@@ -371,6 +371,13 @@ Add a row for every new prompt or heuristic and bump the version string on any e
 | 2026-10-29 | Claude (for Collins) | MODIFY | `lib/types.ts` | Doc comment: `kenyanContextTips` is one tip per line |
 | 2026-10-29 | Claude (for Collins) | MODIFY | `AGENTS.md` | Rule 9, FE-S statuses, FE-S-12, merge-fix notes, open items |
 | 2026-10-29 | Sandra | CONVERGE | `components/ui/*`, `app/dashboard/*` | FE-S-12 complete: converged all dashboard modules onto canonical components/ui/ and chapter tokens, deleted components/dashboard/ui/, linked landing CTAs to /dashboard |
+| 2026-10-29 | Geoffrey | MODIFY | `app/api/at/ussd/route.ts` | Complete DB-driven numeric USSD tree: pagination (8=Next, 0=Back, 00=Home), screens <= 182 chars, no Gemini, re-prompts on bad input (BE-AT-02) |
+| 2026-10-29 | Geoffrey | CREATE | `lib/sms-templates.ts` | SMS templates <= 160 chars for GPA, deadlines, guide steps, essays, interview score (BE-AT-03) |
+| 2026-10-29 | Geoffrey | CREATE | `app/api/at/sms/delivery/route.ts` | Africa's Talking SMS delivery report webhook with secret check (BE-AT-03) |
+| 2026-10-29 | Geoffrey | MODIFY | `app/api/at/sms/route.ts` | Removed open relay; authenticated outbound SMS and verified inbound webhook with per-phone/per-IP rate limits (BE-AT-03) |
+| 2026-10-29 | Geoffrey | MODIFY | `app/api/at/voice/process-interview/route.ts` | Real audio callback scoring with Gemini 2.5 Flash, personalized context, and SMS delivery (BE-AT-06) |
+| 2026-10-29 | Geoffrey | CREATE | `app/api/health/route.ts` | Health check route reporting database, Gemini, and Africa's Talking reachability (BE-AT-07) |
+| 2026-10-29 | Geoffrey | CREATE | `scripts/test-at-integration.ts` | 36-assertion automated integration test suite for Section 5.4 AT flows |
 
 ---
 
