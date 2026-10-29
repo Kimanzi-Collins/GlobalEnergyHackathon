@@ -70,17 +70,17 @@ CREATE TABLE IF NOT EXISTS essay_reviews (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. Voice API Teacher Recommendations & Mock Interviews
+-- 5. Voice API Mock Interviews
 CREATE TABLE IF NOT EXISTS voice_sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id UUID REFERENCES students(id) ON DELETE CASCADE,
-  session_type TEXT CHECK (session_type IN ('teacher_recommendation', 'mock_interview')),
+  session_type TEXT CHECK (session_type IN ('mock_interview')) DEFAULT 'mock_interview',
   participant_phone TEXT NOT NULL,
   participant_name TEXT,
   target_school TEXT,
   audio_recording_url TEXT,
   raw_transcript TEXT,
-  ai_generated_output TEXT, -- Formatted US Recommendation Letter or Mock Interview Feedback
+  ai_generated_output TEXT, -- Mock interview feedback (JSON)
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'calling', 'recorded', 'completed', 'failed')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
