@@ -59,6 +59,9 @@ const config: Config = {
         h3: ['clamp(1.5rem, 1.2rem + 1.2vw, 2.25rem)', { lineHeight: '1.12', letterSpacing: '-0.022em' }],
         h2: ['clamp(2.25rem, 1.4rem + 3.8vw, 5rem)', { lineHeight: '1.02', letterSpacing: '-0.035em' }],
         h1: ['clamp(3rem, 1.5rem + 7vw, 8.5rem)', { lineHeight: '0.96', letterSpacing: '-0.045em' }],
+        // Dashboard scale: page titles and the monumental numeral on each page.
+        dash: ['clamp(2.5rem, 1.5rem + 3.8vw, 4.75rem)', { lineHeight: '0.98', letterSpacing: '-0.04em' }],
+        stat: ['clamp(3.75rem, 1.5rem + 8vw, 9rem)', { lineHeight: '0.88', letterSpacing: '-0.055em' }],
         mega: ['clamp(5rem, 2rem + 17vw, 20rem)', { lineHeight: '0.84', letterSpacing: '-0.06em' }],
       },
       transitionTimingFunction: {

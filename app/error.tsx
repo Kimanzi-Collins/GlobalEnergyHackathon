@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mark } from '@/components/landing/nav';
+import { Mark } from '@/components/ui/mark';
 import { USSD_SERVICE_CODE } from '@/lib/constants';
 import { t } from '@/lib/strings';
 

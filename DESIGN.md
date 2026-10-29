@@ -191,27 +191,33 @@ Eight chapters, light and dark alternating like an Apple product page. Frosted 5
 
 Calls to action point at on-page anchors (`#phone`, `#tools`) until the dashboard exists; change the hero and nav buttons to `/dashboard` when FE-S-01 ships.
 
-### 7.2 Dashboard `/dashboard` (Sandra)
+### 7.2 Dashboard system `/dashboard` (built)
 
-Student view, after phone verification. Same tokens, denser layout.
-- **Top band:** greeting in large Geist, next deadline as a mono countdown, progress ring (SVG) for guide completion.
-- **Context card:** the student profile (KCSE, tests, majors, aid band) with inline edit and a "this is what Pepea tells Gemini about you" disclosure. Consent state visible.
-- **Main grid (asymmetric):** Guide checklist (wide), Matches (tall), Aid (medium), Essays by school (wide), Recent chat (narrow).
-- **Empty states:** every list has a designed empty state with one action and a USSD hint.
-- Realtime: new essay version and review appear via Supabase Realtime with a subtle slide-in.
+The dashboard is one dark chapter (`data-chapter="dark"`) with a fixed rail and a quiet ambient glow. It uses the same tokens, type and motion as the landing page, with a denser layout. Rules every dashboard page follows:
 
-### 7.3 Module pages (Sandra, all under `/dashboard/*`)
+- **Header:** `PageHero` (small label with icon, a two-line title of two to five words with at most one gradient word, one sentence of description, an optional aside). Titles are `text-dash` (40 to 76px).
+- **Surfaces:** `Panel` (rounded, flat, a hairline top highlight, no shadow). One `glow` panel per page, the one that should lead.
+- **Numbers are the design:** `Stat` for the monumental figure (rolling digits, `text-stat` up to 144px, accent colour), `ProgressRing` for completion, `Meter` for rubric and match bars. Never a bare number in small mono.
+- **Type:** Geist. Labels are sentence case at 14px; eyebrows are 12.8px uppercase. Minimum text size is 12px. Mono is only for codes, phone numbers and the AI payload.
+- **Choice controls:** `Segmented` (a radio group with arrow keys) instead of native selects wherever the options fit on screen. Native selects only for long lists, with a dark background.
+- **Motion:** the page settles in on navigation (`template.tsx`, transform only); headline words, eyebrow and aside are CSS animations so they start before React loads; panels use `Reveal`; rings and bars draw once. Everything is static under reduced motion and Save-Data.
+- **Honesty:** every review, answer or ranking that is a mock carries a visible "Sample" label. Unverified data carries the Unverified badge. GPA is always "indicative".
+- **States:** every list has a designed empty state (`EmptyState`), every async action has a loading state on its button, every save and copy confirms with a toast.
 
-| Route | Module | Key interface |
+Shell (`components/dashboard/DashboardNav.tsx`): left rail on desktop with the student card (initials ringed by guide progress, opens the phone dialog), grouped links (Plan, Tools, You) with an accent bar on the current page, and the numeric USSD code (tap to copy). On phones: a frosted top bar, a five-item tab bar in thumb reach, and a full-screen menu listing all eight destinations. Escape closes every overlay.
+
+### 7.3 Dashboard pages (built, on fixtures)
+
+| Route | Signature | What it does |
 |---|---|---|
-| `/dashboard/guide` | Application Guide | Vertical stepper, 12 steps grouped by phase, each with cost chip, time estimate, "mark done" |
-| `/dashboard/gpa` | GPA Converter | Big grade selector (A to E as large type buttons) or points slider 7-84, result as monumental numeral with the "indicative" label and a copy-for-Common-App note |
-| `/dashboard/aid` | Financial Aid Scout | Ranked list with match score bar, reasons, required forms, deadline, official link, unverified badge |
-| `/dashboard/essays` | Essays | Step 1 pick **type** (list of 9 types with scope chips: common / school / scholarship / aid). Step 2 for school-specific types pick **school** then **prompt**. Step 3 editor with live word count against the limit, then review panel |
-| `/dashboard/essays/[id]` | Essay detail | Version timeline, rubric bars by essay type, line-edit sidebar, the one example rewrite |
-| `/dashboard/lor` | LOR Review | Recommender details, paste letter, four-axis score, gaps, "what to add about Kenya" list |
-| `/dashboard/advisor` | University Advisory | Reach / target / likely columns (stacked on phone), aid outlook chip, chat box for questions |
-| `/dashboard/context` | Student Context | Full profile editor, facts list (delete any), conversation history per channel, data export and delete |
+| `/dashboard` | Days to the next deadline in monumental type, from the real clock | Plan ring, student context row, next four steps, shortlist with fit rings, essays with scores, aid matches |
+| `/dashboard/gpa` | A rolling GPA numeral and a 12-bar band chart you can click | Mean grade or points slider, save to profile, the sentence to paste into the Common App |
+| `/dashboard/guide` | A timeline whose spine turns green as steps complete | Sticky phase index, expandable steps, mark done, cost and time chips, USSD shortcut per step |
+| `/dashboard/essays` | Three steps: type, school and prompt, then write. The editor stays locked until a school essay has its prompt | Live word ring and limit from the prompt, real autosave to this phone, rubric meters per essay type, line edits, Kenya context |
+| `/dashboard/lor` | Four-axis assessment beside the letter | Strengths, gaps, what to add about Kenya, sentence-level rewrites. Never writes the letter |
+| `/dashboard/advisor` | Three lanes: reach, target, likely | Fit rings, aid outlook, test policy, deadlines, "why this school", ask box |
+| `/dashboard/aid` | Ranked programmes with match meters | Filter by type, forms and deadlines, how to apply, official link, scam warning |
+| `/dashboard/context` | "What the AI sees": the exact payload, on demand | Editable profile, deletable facts, activities, consent state, conversation history |
 
 ### 7.4 USSD simulator (Collins)
 

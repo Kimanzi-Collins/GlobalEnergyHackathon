@@ -209,6 +209,15 @@ PR #4 merged cleanly in git but left `master` broken. What was wrong and what ch
 3. *Mock review data did not match the contract.* Her essay and LOR fixtures used field names that are not in `lib/types.ts` (`originalText`, `explanation`, `kenyanContextGaps`, `scores`, `whatToAddAboutKenya`) and a verdict that does not exist (`Competitive`), and lacked required fields. `next build` failed on 17 type errors. Fix: the fixtures and the two pages now follow the contract (`original`, `issue`, `kenyanContextTips` as one tip per line, `rubricScores`, `kenyaContextToAdd`, verdict `Needs Specifics`). The contract itself did not change except for one doc comment.
 4. *`AGENTS.md` was never updated for the dashboard.* Her commit did not touch it, and the merge kept only Collins's version. Her work is logged in section 11 below.
 
+**Dashboard premium rework (2026-10-29, requested by Sandra, done with Claude)**
+
+- Rebuilt the shell and all eight dashboard pages on one design system. New kit in `components/dashboard/`: `PageHero`, `Panel`, `Stat`, `ProgressRing`, `Meter`, `Segmented`, `EmptyState`, plus a rebuilt `DashboardNav` and `app/dashboard/template.tsx` (route transition). Design rules are in `DESIGN.md` 7.2 and 7.3.
+- Statuses are unchanged on purpose: FE-S-01 to FE-S-09 stay `[/]` because the pages still run on fixtures and no BE route exists. The UI work is finished; the remaining work is wiring each page to its API and writing tests.
+- Verified on a production build: `tsc` clean, `next build` passes (each dashboard page 128 to 139 kB first-load JS), Lighthouse mobile 100 / 100 / 100 on the overview and essays pages (LCP 0.8s, CLS 0 to 0.002), accessibility 100 on all four pages measured. all 43 scripted interaction checks pass (two essay checks were re-run after correcting the test script's own selector) (GPA bands and slider, essay type then school then prompt gating, word limit and real autosave, guide progress and numbering, advisor and context actions, nav and dialogs, phone menu, reduced motion on every page). The landing page's 14 checks still pass.
+- Honesty fixes made along the way: the essays page said "Autosaved to local memory" but saved nothing (it now really saves, one draft per essay and prompt); the advisor mock answer promised a "$0" family contribution, which breaks the no-guarantee rule (reworded, labelled "Sample answers"); reviews are labelled "Sample review" until BE-API-05 and BE-API-07 ship.
+- Behaviour changes to know about: the overview's deadline is computed from the real clock instead of a hard-coded "3 days"; the guide numbers steps 1 to 12 in reading order (the fixture's `order` field jumps between phases, and the fixture has no "Decide" step); "Why This School" has no prompts in the fixtures, so that essay type correctly shows "No school on your list asks this essay yet".
+- Not changed: the dashboard still identifies students by phone number from fixtures and localStorage (see section 12, item 3).
+
 ### 6.3 Frontend tests
 
 | ID | P | Owner | Test | Status |
@@ -378,6 +387,16 @@ Add a row for every new prompt or heuristic and bump the version string on any e
 | 2026-10-29 | Geoffrey | MODIFY | `app/api/at/voice/process-interview/route.ts` | Real audio callback scoring with Gemini 2.5 Flash, personalized context, and SMS delivery (BE-AT-06) |
 | 2026-10-29 | Geoffrey | CREATE | `app/api/health/route.ts` | Health check route reporting database, Gemini, and Africa's Talking reachability (BE-AT-07) |
 | 2026-10-29 | Geoffrey | CREATE | `scripts/test-at-integration.ts` | 36-assertion automated integration test suite for Section 5.4 AT flows |
+| 2026-10-29 | Sandra and Claude | CREATE | `components/dashboard/{page-hero,panel,stat,progress-ring,meter,segmented,empty-state}.tsx` | Dashboard design kit |
+| 2026-10-29 | Sandra and Claude | REWRITE | `components/dashboard/DashboardNav.tsx`, `app/dashboard/layout.tsx` | New shell: student card with progress ring, grouped rail, tap-to-copy USSD code, frosted phone bar, tab bar, full-screen menu, accessible dialogs |
+| 2026-10-29 | Sandra and Claude | CREATE | `app/dashboard/template.tsx` | Route transition (transform only) |
+| 2026-10-29 | Sandra and Claude | REWRITE | `app/dashboard/page.tsx`, `gpa/page.tsx`, `guide/page.tsx`, `essays/page.tsx`, `lor/page.tsx`, `advisor/page.tsx`, `aid/page.tsx`, `context/page.tsx` | All eight pages rebuilt on the kit; real autosave, real-clock deadline, honest sample labels |
+| 2026-10-29 | Sandra and Claude | CREATE | `components/ui/mark.tsx` | Brand mark moved out of the landing nav so the dashboard does not import landing code |
+| 2026-10-29 | Sandra and Claude | MODIFY | `components/ui/input.tsx`, `components/ui/textarea.tsx` | Sentence-case 14px labels, readable hints and errors, softer fields, higher-contrast placeholder |
+| 2026-10-29 | Sandra and Claude | MODIFY | `lib/utils.ts` | `cn()` now knows the custom font-size tokens (`text-stat`, `text-micro`, ...). Before, tailwind-merge dropped them whenever a colour class followed, which silently shrank type and badges app-wide |
+| 2026-10-29 | Sandra and Claude | MODIFY | `tailwind.config.ts`, `app/globals.css` | `text-dash` and `text-stat` sizes, `dash-ambient`, `dash-enter`, `panel-edge`, styled range slider |
+| 2026-10-29 | Sandra and Claude | MODIFY | `app/not-found.tsx`, `app/error.tsx`, `components/landing/nav.tsx` | Import `Mark` from its own module |
+| 2026-10-29 | Sandra and Claude | MODIFY | `AGENTS.md`, `DESIGN.md` | Dashboard rework notes and design system (7.2, 7.3), file log |
 
 ---
 
@@ -391,3 +410,5 @@ Add a row for every new prompt or heuristic and bump the version string on any e
 6. **Merge incident (2026-10-29): what to do differently.** PR #4 merged with no textual conflict markers and still broke `master` (case-colliding filenames, dropped design tokens, 17 type errors, no `AGENTS.md` update). A clean git merge is not proof that the app works. Before any push to `master`: `git pull`, `npx tsc --noEmit`, `npx next build`. (Team)
 7. **Converged UI kit (FE-S-12 done).** `components/ui/` is now the single unified kit across landing and dashboard. `components/dashboard/ui/` has been removed. (Sandra)
 8. **Duplicate fixtures.** `lib/fixtures/essays.ts` (landing) and `lib/fixtures/index.ts` (dashboard) both describe essay types and schools. Consolidate when the API routes replace them (BE-API-04). (Sandra, Collins)
+9. **Dev server shows tiny headings (stale CSS).** After many hot reloads, `next dev` can stop emitting a custom class such as `text-dash`, so titles render at 16px. It is a dev cache problem, not a code bug: stop the server, delete `.next` and start again. A production build (`next build`) is unaffected, so judge visuals on a production build. (Everyone)
+10. **Interaction tests are not in the repo yet.** The 43 dashboard checks and 14 landing checks were run with puppeteer from a temporary folder. FE-TEST-01 to FE-TEST-05 are still open as committed tests; the scripts cover the cases and can be ported to Playwright. (Sandra, Collins)

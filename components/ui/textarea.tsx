@@ -41,7 +41,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
         {...props}
       />
       {wordLimit ? (
-        <p className={cn('tnum mt-1.5 text-right text-xs font-mono', over ? 'font-bold text-accent' : near ? 'font-medium text-accent' : 'text-fg2')} aria-live="polite">
+        <p className={cn('tnum mt-2 text-right text-sm', over ? 'font-medium text-accent' : near ? 'font-medium text-accent' : 'text-fg2')} aria-live="polite">
           {over ? `${words} words, over by ${words - wordLimit}` : `${words} / ${wordLimit} words`}
         </p>
       ) : null}

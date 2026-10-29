@@ -1,114 +1,116 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  UserCheck,
-  Shield,
-  Trash2,
-  Plus,
-  Save,
-  Check,
-  AlertTriangle,
-  Sparkles,
-  Eye,
-  RefreshCw,
-  Phone,
-  MessageSquare,
-} from 'lucide-react';
+import { Eye, EyeOff, Plus, Save, Trash2, UserCheck } from 'lucide-react';
 import { useStudentSession } from '@/lib/session-context';
-import { mockStudentFacts } from '@/lib/fixtures';
-import { StudentFact, Activity } from '@/lib/types';
+import { mockStudentFacts, mockStudentContext } from '@/lib/fixtures';
+import type { Activity, IncomeBand, StudentFact, StudentProfile } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { fieldClasses } from '@/components/ui/input';
+import { useToast } from '@/components/ui/toast';
+import { Reveal } from '@/components/motion/reveal';
+import { PageHero } from '@/components/dashboard/page-hero';
+import { Panel } from '@/components/dashboard/panel';
+import { EmptyState } from '@/components/dashboard/empty-state';
+import { cn } from '@/lib/utils';
 
+const SCHOOL_TYPES: Array<{ value: NonNullable<StudentProfile['schoolType']>; label: string }> = [
+  { value: 'national', label: 'National school' },
+  { value: 'extra_county', label: 'Extra-county school' },
+  { value: 'county', label: 'County school' },
+  { value: 'sub_county', label: 'Sub-county school' },
+  { value: 'private', label: 'Private school' },
+  { value: 'other', label: 'Other' },
+];
+
+const INCOME: Array<{ value: IncomeBand; label: string }> = [
+  { value: 'under_5k', label: 'Under $5,000 a year' },
+  { value: '5k_20k', label: '$5,000 to $20,000' },
+  { value: '20k_60k', label: '$20,000 to $60,000' },
+  { value: '60k_100k', label: '$60,000 to $100,000' },
+  { value: 'over_100k', label: 'Over $100,000' },
+  { value: 'unknown', label: 'Prefer not to say' },
+];
+
+const humanize = (key: string) => key.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase());
+
+function Select({ label, value, onChange, name, children }: { label: string; value: string; onChange: React.ChangeEventHandler<HTMLSelectElement>; name: string; children: React.ReactNode }) {
+  return (
+    <div className="w-full">
+      <label htmlFor={name} className="mb-2 block text-sm font-medium text-fg">
+        {label}
+      </label>
+      <select
+        id={name}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className={cn(fieldClasses, "h-11 appearance-none pr-10 [color-scheme:dark]")}
+        style={{
+          backgroundColor: "rgb(var(--bg) / 0.5)",
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23A1A1A6' stroke-width='1.6'%3E%3Cpath d='M4 6l4 4 4-4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "right 1rem center",
+          backgroundSize: "16px",
+        }}
+      >
+        {children}
+      </select>
+    </div>
+  );
+}
+
+/** Student context: the profile every channel and every AI call reads, fully visible and editable by the student. */
 export default function StudentContextPage() {
   const { student, phoneNumber, updateProfile } = useStudentSession();
+  const { push } = useToast();
 
-  // Profile form state
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     fullName: student.fullName || '',
     county: student.county || '',
     schoolName: student.schoolName || '',
     schoolType: student.schoolType || 'national',
-    kcseYear: student.kcseYear || 2025,
-    satScore: student.satScore || '',
+    kcseYear: String(student.kcseYear || 2025),
+    satScore: student.satScore ? String(student.satScore) : '',
     intendedMajors: student.intendedMajors?.join(', ') || '',
     needsFullAid: student.needsFullAid,
-    familyIncomeBand: student.familyIncomeBand || 'under_5k',
+    familyIncomeBand: (student.familyIncomeBand || 'under_5k') as IncomeBand,
   });
-
   const [activities, setActivities] = useState<Activity[]>(student.activities || []);
   const [facts, setFacts] = useState<StudentFact[]>(mockStudentFacts);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [showGeminiJson, setShowGeminiJson] = useState(false);
+  const [showRaw, setShowRaw] = useState(false);
 
-  // Handle Form Change
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      const checked = (e.target as HTMLInputElement).checked;
-      setFormData((prev) => ({ ...prev, [name]: checked }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
+  const set = (name: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm((p) => ({ ...p, [name]: e.target.value }));
 
-  // Save Profile Handler
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const save = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfile({
-      fullName: formData.fullName,
-      county: formData.county,
-      schoolName: formData.schoolName,
-      schoolType: formData.schoolType as any,
-      kcseYear: Number(formData.kcseYear),
-      satScore: formData.satScore ? Number(formData.satScore) : undefined,
-      intendedMajors: formData.intendedMajors
-        .split(',')
-        .map((m) => m.trim())
-        .filter(Boolean),
-      needsFullAid: formData.needsFullAid,
-      familyIncomeBand: formData.familyIncomeBand as any,
+      fullName: form.fullName,
+      county: form.county,
+      schoolName: form.schoolName,
+      schoolType: form.schoolType as StudentProfile['schoolType'],
+      kcseYear: Number(form.kcseYear),
+      satScore: form.satScore ? Number(form.satScore) : undefined,
+      intendedMajors: form.intendedMajors.split(',').map((m) => m.trim()).filter(Boolean),
+      needsFullAid: form.needsFullAid,
+      familyIncomeBand: form.familyIncomeBand,
       activities,
     });
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    push({ title: 'Profile saved', description: 'Every tool and channel now uses these details.' });
   };
 
-  // Delete Fact
-  const handleDeleteFact = (keyToDelete: string) => {
-    setFacts((prev) => prev.filter((f) => f.key !== keyToDelete));
+  const removeFact = (key: string) => {
+    setFacts((p) => p.filter((f) => f.key !== key));
+    push({ title: 'Fact deleted', description: 'Pepea will no longer use it.' });
   };
 
-  // Add sample activity
-  const handleAddActivity = () => {
-    setActivities((prev) => [
-      ...prev,
-      {
-        title: 'New Student Activity',
-        role: 'Member / Participant',
-        years: 1,
-        summary: 'Describe leadership, initiative, or community involvement.',
-      },
-    ]);
-  };
+  const updateActivity = (i: number, u: Partial<Activity>) => setActivities((p) => p.map((a, idx) => (idx === i ? { ...a, ...u } : a)));
 
-  const handleUpdateActivity = (index: number, updates: Partial<Activity>) => {
-    setActivities((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], ...updates };
-      return next;
-    });
-  };
-
-  const handleDeleteActivity = (index: number) => {
-    setActivities((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  // Reconstruct the exact context payload injected into Gemini 2.5 Flash
-  const geminiInjectedContext = {
+  // The exact payload the AI receives (see lib/prompts/system-prompt.ts, STUDENT CONTEXT).
+  const payload = {
     profile: {
       fullName: student.fullName,
       phoneNumber: student.phoneNumber,
@@ -123,307 +125,192 @@ export default function StudentContextPage() {
       familyIncomeBand: student.familyIncomeBand,
     },
     facts,
-    channel: 'web',
-    instructions:
-      'Never guarantee admission. Never invent university requirements. Label all GPA conversions as indicative. Never request payment or financial transfers.',
   };
 
-  return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
-      {/* 1. Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line/10">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-accent uppercase tracking-widest mb-1">
-            <UserCheck className="w-3.5 h-3.5" />
-            <span>Student Context &amp; Privacy Transparency</span>
-          </div>
-          <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-fg">
-            Identity &amp; Context
-          </h1>
-          <p className="text-sm text-fg2 mt-1 max-w-2xl">
-            Review and edit the personal facts Pepea uses across USSD, SMS, WhatsApp, and Web. You maintain full ownership and can delete any inferred fact.
-          </p>
-        </div>
+  const consent = student.consentGivenAt ? new Date(student.consentGivenAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
 
-        {/* Gemini Disclosure Modal Toggle */}
-        <button
-          onClick={() => setShowGeminiJson(!showGeminiJson)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-xs font-mono hover:bg-accent/20 transition-colors self-start sm:self-auto"
-        >
-          <Eye className="w-4 h-4" />
-          <span>{showGeminiJson ? 'Hide Gemini Payload' : 'What Gemini Sees'}</span>
-        </button>
+  return (
+    <div>
+      <PageHero
+        eyebrow="Student context"
+        icon={UserCheck}
+        title={'What Pepea\nknows about you.'}
+        accentWord="you."
+        description="One profile, tied to your phone number, shared across USSD, SMS, WhatsApp and the web. You can see all of it, change any of it, and delete any fact."
+        aside={
+          <div className="text-sm text-fg2 sm:text-right">
+            <p className="font-mono text-fg">{phoneNumber}</p>
+            <p className="mt-1">{consent ? `Saved with your consent on ${consent}` : 'No consent recorded yet'}</p>
+          </div>
+        }
+      />
+
+      <div className="grid gap-4 lg:grid-cols-12 lg:gap-5">
+        {/* Profile */}
+        <Reveal className="lg:col-span-7">
+          <Panel eyebrow="Profile" title="About you" className="h-full">
+            <form onSubmit={save} className="space-y-7">
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Input label="Full name" name="fullName" value={form.fullName} onChange={set('fullName')} required />
+                <Input label="Phone number" value={phoneNumber} readOnly hint="Change it from your profile in the menu." className="font-mono text-fg2" />
+                <Input label="County" name="county" value={form.county} onChange={set('county')} />
+                <Input label="School" name="schoolName" value={form.schoolName} onChange={set('schoolName')} />
+                <Select label="School type" name="schoolType" value={form.schoolType} onChange={set('schoolType')}>
+                  {SCHOOL_TYPES.map((s) => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </Select>
+                <Input label="KCSE year" name="kcseYear" type="number" inputMode="numeric" value={form.kcseYear} onChange={set('kcseYear')} />
+                <Input label="SAT score" name="satScore" type="number" inputMode="numeric" value={form.satScore} onChange={set('satScore')} hint="Leave empty if you have not taken it." />
+                <Input label="Intended majors" name="intendedMajors" value={form.intendedMajors} onChange={set('intendedMajors')} hint="Separate with commas." />
+              </div>
+
+              <div className="border-t border-line/10 pt-7">
+                <p className="mb-4 text-sm font-medium text-fg">Paying for it</p>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Select label="Family income" name="familyIncomeBand" value={form.familyIncomeBand} onChange={set('familyIncomeBand')}>
+                    {INCOME.map((i) => (
+                      <option key={i.value} value={i.value}>{i.label}</option>
+                    ))}
+                  </Select>
+                  <div>
+                    <p className="mb-2 text-sm font-medium text-fg">I need full financial aid</p>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={form.needsFullAid}
+                      aria-label="I need full financial aid"
+                      onClick={() => setForm((p) => ({ ...p, needsFullAid: !p.needsFullAid }))}
+                      className={cn('relative h-11 w-[4.5rem] rounded-full ring-1 ring-inset transition-colors duration-300', form.needsFullAid ? 'bg-accent ring-transparent' : 'bg-fg/10 ring-line/15')}
+                    >
+                      <span className={cn('absolute left-1 top-1 h-9 w-9 rounded-full bg-bg shadow transition-transform duration-500 ease-expo-out', form.needsFullAid && 'translate-x-[1.75rem]')} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button type="submit">
+                  <Save className="h-4 w-4" />
+                  Save profile
+                </Button>
+              </div>
+            </form>
+          </Panel>
+        </Reveal>
+
+        {/* Transparency + facts */}
+        <div className="space-y-4 lg:col-span-5 lg:space-y-5">
+          <Reveal delay={0.06}>
+            <Panel
+              glow
+              eyebrow="Transparency"
+              title="What the AI sees"
+              action={
+                <Button variant="secondary" size="sm" onClick={() => setShowRaw((v) => !v)}>
+                  {showRaw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showRaw ? 'Hide' : 'Show'}
+                </Button>
+              }
+            >
+              <p className="text-[15px] leading-relaxed text-fg2">
+                Each time you ask Pepea something, these details are sent with your question so answers fit you. Nothing else about you is shared, and it is never sold.
+              </p>
+              {showRaw && (
+                <pre className="thin-scroll animate-fade-in mt-5 max-h-72 overflow-auto rounded-2xl bg-screen p-4 font-mono text-xs leading-relaxed text-phosphor ring-1 ring-inset ring-phosphor/20">
+                  {JSON.stringify(payload, null, 2)}
+                </pre>
+              )}
+            </Panel>
+          </Reveal>
+
+          <Reveal delay={0.1}>
+            <Panel eyebrow="Facts" title="Things Pepea remembers" action={<Badge kind="neutral" className="normal-case">{facts.length} facts</Badge>}>
+              {facts.length === 0 ? (
+                <EmptyState icon={UserCheck} title="No facts saved" body="As you chat, Pepea may remember useful details. You will see them here and can delete them." />
+              ) : (
+                <ul className="space-y-3">
+                  {facts.map((f) => (
+                    <li key={f.key} className="group flex items-start gap-3 rounded-3xl bg-bg/40 p-4 ring-1 ring-inset ring-line/10">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium">{humanize(f.key)}</p>
+                        <p className="mt-1 text-sm leading-relaxed text-fg2">{f.value}</p>
+                        <p className="mt-2 text-xs text-fg2">{f.source === 'ai_inferred' ? 'Inferred by Pepea' : 'You said this'} · {Math.round(f.confidence * 100)}% sure</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFact(f.key)}
+                        aria-label={`Delete fact: ${humanize(f.key)}`}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-fg2 transition-colors duration-300 hover:bg-murram/20 hover:text-murram-light"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+          </Reveal>
+        </div>
       </div>
 
-      {/* 2. Transparent "What Gemini Sees" Disclosure Box */}
-      {showGeminiJson && (
-        <Card className="bg-screen ring-1 ring-inset ring-phosphor/30 text-phosphor font-mono space-y-3">
-          <div className="flex items-center justify-between border-b border-phosphor/20 pb-2">
-            <span className="text-xs uppercase tracking-wider text-phosphor font-bold flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              Live Server Context Injected into Gemini 2.5 Flash:
-            </span>
-            <span className="text-[10px] text-phosphor/60">Read-only system view</span>
-          </div>
-          <pre className="text-xs overflow-x-auto p-2 bg-black/40 rounded-xl max-h-72 leading-relaxed">
-            {JSON.stringify(geminiInjectedContext, null, 2)}
-          </pre>
-          <p className="text-[11px] text-phosphor/70 pt-1">
-            Privacy Guarantee: We never sell student data or train external foundational models on private drafts.
-          </p>
-        </Card>
-      )}
-
-      {/* 3. Main Form Grid */}
-      <form onSubmit={handleSaveProfile} className="space-y-8">
-        {/* Core Profile Card */}
-        <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-line/10">
-            <div>
-              <h2 className="font-editorial text-2xl font-bold text-fg">Academic &amp; School Profile</h2>
-              <p className="text-xs text-fg2">
-                Your high school records and test scores used for university recommendations.
-              </p>
-            </div>
-            <span className="text-xs font-mono text-phosphor bg-screen px-2.5 py-1 rounded-full ring-1 ring-inset ring-phosphor/30">
-              {phoneNumber}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Input
-              label="Full Name"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              required
-            />
-            <Input
-              label="County in Kenya"
-              name="county"
-              value={formData.county}
-              onChange={handleChange}
-              placeholder="e.g. Kericho, Nairobi, Kiambu"
-            />
-            <Input
-              label="Secondary School Name"
-              name="schoolName"
-              value={formData.schoolName}
-              onChange={handleChange}
-              placeholder="e.g. Alliance High School"
-            />
-
-            <div>
-              <label className="block text-xs font-mono font-medium tracking-wider text-fg2 uppercase mb-1.5">
-                School Type
-              </label>
-              <select
-                name="schoolType"
-                value={formData.schoolType}
-                onChange={handleChange}
-                className="w-full bg-surface border border-line/15 rounded-xl px-4 py-2.5 text-fg text-sm focus:outline-none focus:ring-1 focus:ring-accent"
-              >
-                <option value="national">National High School</option>
-                <option value="extra_county">Extra-County School</option>
-                <option value="county">County School</option>
-                <option value="sub_county">Sub-County Day School</option>
-                <option value="private">Private Secondary School</option>
-              </select>
-            </div>
-
-            <Input
-              label="KCSE Graduation Year"
-              name="kcseYear"
-              type="number"
-              value={formData.kcseYear}
-              onChange={handleChange}
-            />
-
-            <Input
-              label="SAT Score (Optional)"
-              name="satScore"
-              type="number"
-              placeholder="e.g. 1440 (or leave blank)"
-              value={formData.satScore}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <Input
-              label="Intended Majors (Comma-separated)"
-              name="intendedMajors"
-              value={formData.intendedMajors}
-              onChange={handleChange}
-              placeholder="Computer Science, Electrical Engineering, Economics"
-              hint="Colleges evaluate applications by prospective academic department."
-            />
-
-            <div>
-              <label className="block text-xs font-mono font-medium tracking-wider text-fg2 uppercase mb-1.5">
-                Estimated Family Income Band
-              </label>
-              <select
-                name="familyIncomeBand"
-                value={formData.familyIncomeBand}
-                onChange={handleChange}
-                className="w-full bg-surface border border-line/15 rounded-xl px-4 py-2.5 text-fg text-sm focus:outline-none focus:ring-1 focus:ring-accent"
-              >
-                <option value="under_5k">Under $5,000 / year (Full Aid Eligible)</option>
-                <option value="5k_20k">$5,000 – $20,000 / year</option>
-                <option value="20k_60k">$20,000 – $60,000 / year</option>
-                <option value="over_100k">Over $100,000 / year</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                name="needsFullAid"
-                checked={formData.needsFullAid}
-                onChange={handleChange}
-                className="w-4 h-4 rounded border-line/20 bg-bg accent-accent"
-              />
-              <span className="text-sm text-fg">
-                I require 100% full demonstrated financial aid to attend a US university (Tuition + Room &amp; Board).
-              </span>
-            </label>
-          </div>
-        </Card>
-
-        {/* Extracurricular Activities Card */}
-        <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-line/10">
-            <div>
-              <h2 className="font-editorial text-2xl font-bold text-fg">
-                Activities &amp; Leadership (Common App List)
-              </h2>
-              <p className="text-xs text-fg2">
-                Add science projects, family commitments, tutoring, or community initiatives.
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={handleAddActivity}
-              className="text-xs"
-            >
-              <Plus className="w-3.5 h-3.5 mr-1" /> Add Activity
+      {/* Activities */}
+      <Reveal className="mt-4 lg:mt-5">
+        <Panel
+          eyebrow="Activities"
+          title="What you do outside class"
+          action={
+            <Button variant="secondary" size="sm" onClick={() => setActivities((p) => [...p, { title: '', role: '', years: 1, summary: '' }])}>
+              <Plus className="h-4 w-4" />
+              Add
             </Button>
-          </div>
-
-          <div className="space-y-4">
-            {activities.map((act, idx) => (
-              <div
-                key={idx}
-                className="p-4 rounded-2xl bg-bg/50 ring-1 ring-inset ring-line/10 space-y-3 relative group"
-              >
-                <button
-                  type="button"
-                  onClick={() => handleDeleteActivity(idx)}
-                  className="absolute top-4 right-4 text-fg2 hover:text-murram-light transition-colors"
-                  title="Remove activity"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pr-8">
-                  <Input
-                    label="Activity Title"
-                    value={act.title}
-                    onChange={(e) => handleUpdateActivity(idx, { title: e.target.value })}
-                  />
-                  <Input
-                    label="Role / Position"
-                    value={act.role || ''}
-                    onChange={(e) => handleUpdateActivity(idx, { role: e.target.value })}
-                  />
-                  <Input
-                    label="Years of Involvement"
-                    type="number"
-                    value={act.years || 1}
-                    onChange={(e) => handleUpdateActivity(idx, { years: Number(e.target.value) })}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono font-medium tracking-wider text-fg2 uppercase mb-1">
-                    Impact &amp; Accomplishments (Max 150 chars for Common App)
-                  </label>
-                  <input
-                    type="text"
-                    value={act.summary || ''}
-                    onChange={(e) => handleUpdateActivity(idx, { summary: e.target.value })}
-                    className="w-full bg-surface border border-line/15 rounded-xl px-3 py-2 text-xs text-fg focus:outline-none focus:ring-1 focus:ring-accent"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Inferred Context Facts Card (With Delete) */}
-        <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-line/10">
-            <div>
-              <h2 className="font-editorial text-2xl font-bold text-fg">
-                Inferred Admissions Facts
-              </h2>
-              <p className="text-xs text-fg2">
-                Facts extracted from your statements and WhatsApp chats. Delete any inaccurate item.
-              </p>
-            </div>
-            <Badge kind="indicative">{facts.length} Verified Facts</Badge>
-          </div>
-
-          <div className="divide-y divide-line/10">
-            {facts.map((fact) => (
-              <div key={fact.key} className="py-3 flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-semibold text-accent uppercase">
-                      {fact.key.replace(/_/g, ' ')}
-                    </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-fg/5 text-fg2">
-                      Source: {fact.source}
-                    </span>
+          }
+        >
+          {activities.length === 0 ? (
+            <EmptyState icon={Plus} title="No activities yet" body="Add clubs, projects, jobs or responsibilities at home. Admissions officers read these closely." />
+          ) : (
+            <ul className="grid gap-4 md:grid-cols-2">
+              {activities.map((a, i) => (
+                <li key={i} className="rounded-3xl bg-bg/40 p-5 ring-1 ring-inset ring-line/10">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-micro font-medium uppercase tracking-[0.1em] text-fg2">Activity {i + 1}</p>
+                    <button type="button" onClick={() => setActivities((p) => p.filter((_, idx) => idx !== i))} aria-label={`Remove activity ${i + 1}`} className="-mr-1 -mt-1 grid h-8 w-8 place-items-center rounded-full text-fg2 transition-colors hover:bg-murram/20 hover:text-murram-light">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
-                  <p className="text-sm text-fg leading-relaxed">{fact.value}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleDeleteFact(fact.key)}
-                  className="p-1.5 text-fg2 hover:text-murram-light hover:bg-fg/5 rounded-lg transition-colors shrink-0"
-                  title="Delete fact"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </Card>
+                  <div className="mt-3 space-y-4">
+                    <Input label="Title" value={a.title} onChange={(e) => updateActivity(i, { title: e.target.value })} />
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-2">
+                        <Input label="Your role" value={a.role ?? ''} onChange={(e) => updateActivity(i, { role: e.target.value })} />
+                      </div>
+                      <Input label="Years" type="number" min={0} value={a.years ?? 0} onChange={(e) => updateActivity(i, { years: Number(e.target.value) })} />
+                    </div>
+                    <Input label="What you did" value={a.summary ?? ''} onChange={(e) => updateActivity(i, { summary: e.target.value })} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </Reveal>
 
-        {/* Save Bar */}
-        <div className="sticky bottom-6 p-4 rounded-2xl bg-surface ring-1 ring-inset ring-line/20 shadow-2xl flex items-center justify-between">
-          <p className="text-xs font-mono text-fg2">
-            All updates sync automatically to your E.164 phone profile.
-          </p>
-          <Button type="submit" variant="primary" size="md">
-            {saveSuccess ? (
-              <>
-                <Check className="w-4 h-4 mr-1 text-accent-fg" /> Profile Updated
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-1.5" /> Save Profile
-              </>
-            )}
-          </Button>
-        </div>
-      </form>
+      {/* Conversation */}
+      <Reveal className="mt-4 lg:mt-5">
+        <Panel eyebrow="Conversation" title="Recent messages, on every channel">
+          <ul className="space-y-4">
+            {mockStudentContext.recentMessages.map((m, i) => (
+              <li key={i} className={cn('flex flex-col', m.role === 'student' ? 'items-end' : 'items-start')}>
+                <p className="mb-1.5 text-xs text-fg2">
+                  {m.role === 'student' ? 'You' : 'Pepea'} · {m.channel}
+                  {m.module ? ` · ${m.module}` : ''}
+                </p>
+                <p className={cn('max-w-2xl rounded-3xl px-5 py-3.5 text-[15px] leading-relaxed', m.role === 'student' ? 'bg-accent text-accent-fg' : 'bg-fg/[0.06] ring-1 ring-inset ring-line/10')}>{m.content}</p>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      </Reveal>
     </div>
   );
 }

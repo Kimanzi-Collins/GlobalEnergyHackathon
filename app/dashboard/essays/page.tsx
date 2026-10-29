@@ -1,442 +1,414 @@
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import {
-  FileEdit,
-  Sparkles,
-  Lock,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  Send,
-  RotateCcw,
-  BookOpen,
-  ArrowRight,
-  HelpCircle,
-} from 'lucide-react';
-import { useStudentSession } from '@/lib/session-context';
-import {
-  mockEssayTypes,
-  mockUniversities,
-  mockSchoolEssayPrompts,
-  mockSampleReviewResult,
-  mockEssays,
-} from '@/lib/fixtures';
-import {
-  EssayTypeCode,
-  EssayScope,
-  EssayReviewResult,
-  SchoolEssayPrompt,
-} from '@/lib/types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Check, FileEdit, Lock, Sparkles } from 'lucide-react';
+import { mockEssayTypes, mockUniversities, mockSchoolEssayPrompts, mockSampleReviewResult } from '@/lib/fixtures';
+import type { EssayReviewResult, EssayScope, EssayTypeCode } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/toast';
+import { Reveal } from '@/components/motion/reveal';
+import { PageHero } from '@/components/dashboard/page-hero';
+import { Panel } from '@/components/dashboard/panel';
+import { Stat } from '@/components/dashboard/stat';
+import { Meter } from '@/components/dashboard/meter';
+import { Segmented } from '@/components/dashboard/segmented';
+import { ProgressRing } from '@/components/dashboard/progress-ring';
+import { EmptyState } from '@/components/dashboard/empty-state';
+import { cn } from '@/lib/utils';
 
+type Persona = 'ivy_committee_chair' | 'kensap_mentor';
+
+const SCOPE_LABEL: Record<EssayScope, string> = {
+  common: 'The same for every school',
+  school_specific: 'Different at each school',
+  scholarship: 'For a scholarship',
+  aid: 'For financial aid',
+};
+
+const SAMPLE_DRAFT =
+  'The soldering iron was too hot for the copper wire, but in Kericho, you do not replace broken tools. You adapt them. In Form 3, when our school dormitory experienced power fluctuations during mock examinations, I used a bicycle dynamo to assemble an emergency battery charger for our study lamps.';
+
+const countWords = (t: string) => (t.trim() ? t.trim().split(/\s+/).length : 0);
+
+/** A numbered step in the header: done, current or upcoming. */
+function Step({ n, label, state }: { n: number; label: string; state: 'done' | 'current' | 'todo' | 'skipped' }) {
+  return (
+    <li className="flex flex-1 items-center gap-3">
+      <span
+        aria-hidden="true"
+        className={cn(
+          'grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-semibold ring-1 ring-inset transition-[background-color,color] duration-500',
+          state === 'done' && 'bg-phosphor/15 text-phosphor ring-phosphor/30',
+          state === 'current' && 'bg-accent text-accent-fg ring-transparent',
+          (state === 'todo' || state === 'skipped') && 'text-fg2 ring-line/25'
+        )}
+      >
+        {state === 'done' ? <Check className="h-4 w-4" /> : n}
+      </span>
+      <span className={cn('hidden text-sm font-medium sm:block', state === 'current' ? 'text-fg' : 'text-fg2')}>
+        {label}
+        {state === 'skipped' && <span className="ml-2 font-normal text-fg2">Not needed</span>}
+      </span>
+      <span aria-hidden="true" className="ml-1 hidden h-px flex-1 bg-line/15 sm:block" />
+    </li>
+  );
+}
+
+/**
+ * Essays by type and by school. Pick the essay, then (for school essays) the school and its exact prompt, then
+ * write with a live word limit and review the draft against that type's rubric.
+ * The review is a sample until BE-API-05 ships; it says so on screen.
+ */
 export default function EssaysStudioPage() {
-  const { student } = useStudentSession();
+  const { push } = useToast();
 
-  // Step 1: Selected Essay Type
-  const [selectedType, setSelectedType] = useState<EssayTypeCode>('personal_statement');
+  const [typeCode, setTypeCode] = useState<EssayTypeCode>('personal_statement');
+  const [universityId, setUniversityId] = useState('');
+  const [promptId, setPromptId] = useState('');
+  const [persona, setPersona] = useState<Persona>('ivy_committee_chair');
+  const [draft, setDraft] = useState(SAMPLE_DRAFT);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+  const [review, setReview] = useState<EssayReviewResult | null>(mockSampleReviewResult);
+  const loadedKey = useRef<string>('');
 
-  // Step 2: For school-specific types: selected school and selected prompt
-  const [selectedUniversityId, setSelectedUniversityId] = useState<string>('');
-  const [selectedPromptId, setSelectedPromptId] = useState<string>('');
+  const type = mockEssayTypes.find((t) => t.code === typeCode) ?? mockEssayTypes[0];
+  const schoolSpecific = type.scope === 'school_specific';
 
-  // Step 3: Draft & Review State
-  const [draft, setDraft] = useState<string>(
-    'The soldering iron was too hot for the copper wire, but in Kericho, you do not replace broken tools—you adapt them. In Form 3, when our school dormitory experienced power fluctuations during mock examinations, I used a bicycle dynamo to assemble an emergency battery charger for our study lamps.'
+  // Only offer schools that actually ask this kind of essay.
+  const schools = useMemo(
+    () => mockUniversities.filter((u) => mockSchoolEssayPrompts.some((p) => p.universityId === u.id && p.essayType === typeCode)),
+    [typeCode]
   );
-  const [persona, setPersona] = useState<'ivy_committee_chair' | 'kensap_mentor'>('ivy_committee_chair');
-  const [isReviewing, setIsReviewing] = useState<boolean>(false);
-  const [reviewResult, setReviewResult] = useState<EssayReviewResult | null>(mockSampleReviewResult);
-
-  // Active essay type metadata
-  const currentTypeObj = mockEssayTypes.find((t) => t.code === selectedType) || mockEssayTypes[0];
-  const isSchoolSpecific = currentTypeObj.scope === 'school_specific';
-
-  // Prompts filtered by selected university and essay type
-  const availablePrompts = mockSchoolEssayPrompts.filter(
-    (p) =>
-      (!selectedUniversityId || p.universityId === selectedUniversityId) &&
-      p.essayType === selectedType
+  const prompts = useMemo(
+    () => mockSchoolEssayPrompts.filter((p) => p.universityId === universityId && p.essayType === typeCode),
+    [universityId, typeCode]
   );
+  const prompt = mockSchoolEssayPrompts.find((p) => p.id === promptId);
 
-  const activePrompt: SchoolEssayPrompt | undefined = mockSchoolEssayPrompts.find(
-    (p) => p.id === selectedPromptId
-  );
+  const limit = prompt?.wordLimit ?? type.defaultWordLimit ?? 650;
+  const unlocked = !schoolSpecific || (Boolean(universityId) && Boolean(promptId));
+  const words = countWords(draft);
+  const over = words > limit;
 
-  // Determine current active word limit
-  const activeWordLimit = activePrompt?.wordLimit || currentTypeObj.defaultWordLimit || 650;
+  // Real autosave: one draft per essay (type, plus the prompt for school essays), kept on this phone.
+  const draftKey = `pepea_draft:${typeCode}:${schoolSpecific ? promptId || 'none' : 'common'}`;
+  useEffect(() => {
+    if (!unlocked) return;
+    try {
+      const saved = localStorage.getItem(draftKey);
+      setDraft(saved ?? (typeCode === 'personal_statement' ? SAMPLE_DRAFT : ''));
+    } catch {
+      /* storage blocked: the draft still works, it just is not remembered */
+    }
+    loadedKey.current = draftKey;
+    setSavedAt(null);
+  }, [draftKey, unlocked, typeCode]);
 
-  // Editor lock rule (FE-TEST-02): If school-specific, requires university and prompt selected
-  const isEditorUnlocked = !isSchoolSpecific || (Boolean(selectedUniversityId) && Boolean(selectedPromptId));
+  useEffect(() => {
+    if (!unlocked || loadedKey.current !== draftKey) return;
+    const id = window.setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, draft);
+        setSavedAt(new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+      } catch {
+        /* ignore */
+      }
+    }, 700);
+    return () => window.clearTimeout(id);
+  }, [draft, draftKey, unlocked]);
 
-  // Word count computation
-  const wordCount = React.useMemo(() => {
-    if (!draft) return 0;
-    const trimmed = draft.trim();
-    return trimmed ? trimmed.split(/\s+/).length : 0;
-  }, [draft]);
-
-  const isOverLimit = wordCount > activeWordLimit;
-  const isNearLimit = wordCount >= Math.floor(activeWordLimit * 0.9) && wordCount <= activeWordLimit;
-
-  // Trigger Gemini Roast Review
-  const handleRunReview = async () => {
-    setIsReviewing(true);
-    setTimeout(() => {
-      setReviewResult({
-        ...mockSampleReviewResult,
-        overallScore: Math.min(94, Math.max(68, 75 + Math.floor(Math.random() * 15))),
-      });
-      setIsReviewing(false);
-    }, 1500);
+  const chooseType = (code: EssayTypeCode) => {
+    setTypeCode(code);
+    setUniversityId('');
+    setPromptId('');
+    setReview(null);
   };
 
+  const runReview = () => {
+    setReviewing(true);
+    window.setTimeout(() => {
+      setReview({ ...mockSampleReviewResult, overallScore: Math.min(94, Math.max(68, 75 + Math.floor(Math.random() * 15))) });
+      setReviewing(false);
+      push({ title: 'Sample review ready', description: 'The live Gemini review arrives with the essays API.' });
+    }, 1400);
+  };
+
+  const groups: Array<{ scope: EssayScope; label: string }> = [
+    { scope: 'common', label: 'Common App' },
+    { scope: 'school_specific', label: 'Each school asks its own' },
+    { scope: 'scholarship', label: 'Scholarships' },
+    { scope: 'aid', label: 'Financial aid' },
+  ];
+
+  const step2: 'done' | 'current' | 'skipped' = !schoolSpecific ? 'skipped' : unlocked ? 'done' : 'current';
+  const step3: 'current' | 'todo' = unlocked ? 'current' : 'todo';
+
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
-      {/* 1. Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line/10">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-accent uppercase tracking-widest mb-1">
-            <FileEdit className="w-3.5 h-3.5" />
-            <span>Admissions Officer Roast Studio • Gemini 2.5 Flash</span>
-          </div>
-          <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-fg">
-            Essays Studio
-          </h1>
-          <p className="text-sm text-fg2 mt-1 max-w-2xl">
-            Pick your prompt, draft with live word bounds, and receive tough Ivy League admissions committee feedback. Pepea diagnoses generic <em>Insha</em> style and highlights missing Kenyan context.
-          </p>
-        </div>
+    <div>
+      <PageHero
+        eyebrow="Essays"
+        icon={FileEdit}
+        title={'Write it.\nThen hear it.'}
+        accentWord="hear"
+        description="Pick the essay, write it, and see it the way an admissions officer will. Pepea points at what to fix. It never writes for you."
+        aside={
+          <Segmented
+            ariaLabel="Reviewer voice"
+            value={persona}
+            onChange={setPersona}
+            options={[
+              { value: 'ivy_committee_chair', label: 'Strict reader' },
+              { value: 'kensap_mentor', label: 'Kenyan mentor' },
+            ]}
+          />
+        }
+      />
 
-        {/* Persona Selector */}
-        <div className="flex items-center gap-2 p-1 bg-surface ring-1 ring-inset ring-line/15 rounded-2xl self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => setPersona('ivy_committee_chair')}
-            className={`px-3 py-1.5 text-xs font-mono rounded-xl transition-colors ${
-              persona === 'ivy_committee_chair'
-                ? 'bg-accent text-accent-fg font-bold'
-                : 'text-fg2 hover:text-fg'
-            }`}
-          >
-            Ivy AO Chair
-          </button>
-          <button
-            type="button"
-            onClick={() => setPersona('kensap_mentor')}
-            className={`px-3 py-1.5 text-xs font-mono rounded-xl transition-colors ${
-              persona === 'kensap_mentor'
-                ? 'bg-accent text-accent-fg font-bold'
-                : 'text-fg2 hover:text-fg'
-            }`}
-          >
-            Kenyan Mentor
-          </button>
-        </div>
-      </div>
+      {/* Progress through the flow */}
+      <Reveal>
+        <ol aria-label="Essay steps" className="mb-5 flex items-center gap-2 rounded-full bg-surface px-5 py-3 ring-1 ring-inset ring-line/10">
+          <Step n={1} label="Choose the essay" state="done" />
+          <Step n={2} label="School and prompt" state={step2} />
+          <Step n={3} label="Write and review" state={step3} />
+        </ol>
+      </Reveal>
 
-      {/* 2. Step 1: Essay Type Selector */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <label className="text-xs font-mono uppercase tracking-wider text-fg2 flex items-center gap-1.5">
-            <span className="w-5 h-5 rounded-full bg-accent text-accent-fg font-bold inline-flex items-center justify-center text-[10px]">
-              1
-            </span>
-            <span>Choose Essay Type:</span>
-          </label>
-          <span className="text-xs font-mono text-fg2">
-            Scope: <span className="text-accent capitalize">{currentTypeObj.scope.replace('_', ' ')}</span>
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-          {mockEssayTypes.map((t) => {
-            const isSelected = selectedType === t.code;
-            return (
-              <button
-                key={t.code}
-                type="button"
-                onClick={() => {
-                  setSelectedType(t.code);
-                  setSelectedPromptId('');
-                }}
-                className={`p-3 rounded-2xl border text-left transition-all ${
-                  isSelected
-                    ? 'bg-accent/15 border-accent text-fg shadow-md'
-                    : 'bg-surface border-line/10 text-fg2 hover:border-line/30 hover:text-fg'
-                }`}
-              >
-                <div className="flex items-center justify-between text-[10px] font-mono mb-1">
-                  <span
-                    className={`px-1.5 py-0.5 rounded-full uppercase ${
-                      t.scope === 'common'
-                        ? 'bg-acacia/40 text-[#8CF2A6]'
-                        : t.scope === 'school_specific'
-                        ? 'bg-murram/30 text-murram-light'
-                        : 'bg-fg/5 text-fg2'
-                    }`}
-                  >
-                    {t.scope.replace('_', ' ')}
-                  </span>
-                  <span>{t.defaultWordLimit}w</span>
+      {/* 1. Type */}
+      <Reveal>
+        <Panel eyebrow="Step 1" title="Which essay?">
+          <div className="grid gap-x-10 gap-y-7 lg:grid-cols-2">
+            {groups.map((g) => {
+              const items = mockEssayTypes.filter((t) => t.scope === g.scope);
+              if (items.length === 0) return null;
+              return (
+                <div key={g.scope}>
+                  <p className="mb-3 text-sm font-medium text-fg2">{g.label}</p>
+                  <Segmented
+                    layout="wrap"
+                    ariaLabel={g.label}
+                    value={items.some((t) => t.code === typeCode) ? typeCode : ('' as EssayTypeCode)}
+                    onChange={chooseType}
+                    options={items.map((t) => ({
+                      value: t.code,
+                      label: t.label.replace(' (Common App)', ''),
+                      hint: t.defaultWordLimit ? `${t.defaultWordLimit} words` : undefined,
+                    }))}
+                  />
                 </div>
-                <p className="text-xs font-semibold line-clamp-1 text-fg">
-                  {t.label}
-                </p>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 3. Step 2 (Mandatory if school-specific): School & Prompt Pickers */}
-      {isSchoolSpecific && (
-        <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-4">
-          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-fg2">
-            <span className="w-5 h-5 rounded-full bg-accent text-accent-fg font-bold inline-flex items-center justify-center text-[10px]">
-              2
-            </span>
-            <span>Select University &amp; School Prompt:</span>
+              );
+            })}
           </div>
+          <p className="mt-6 text-sm text-fg2">{SCOPE_LABEL[type.scope]}.</p>
+        </Panel>
+      </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* School Selector */}
-            <div>
-              <label className="block text-xs font-mono text-fg2 uppercase mb-1.5">
-                Target University:
-              </label>
-              <select
-                value={selectedUniversityId}
-                onChange={(e) => {
-                  setSelectedUniversityId(e.target.value);
-                  setSelectedPromptId('');
-                }}
-                className="w-full bg-bg border border-line/15 rounded-xl px-4 py-2.5 text-fg text-sm focus:outline-none focus:ring-1 focus:ring-accent"
-              >
-                <option value="">-- Select School --</option>
-                {mockUniversities.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Prompt Selector */}
-            <div>
-              <label className="block text-xs font-mono text-fg2 uppercase mb-1.5">
-                Specific Supplemental Prompt:
-              </label>
-              <select
-                value={selectedPromptId}
-                onChange={(e) => setSelectedPromptId(e.target.value)}
-                disabled={!selectedUniversityId}
-                className="w-full bg-bg border border-line/15 rounded-xl px-4 py-2.5 text-fg text-sm focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-40"
-              >
-                <option value="">
-                  {selectedUniversityId ? '-- Choose School Prompt --' : '-- First Select a University --'}
-                </option>
-                {availablePrompts.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title} ({p.wordLimit} words)
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {activePrompt && (
-            <div className="p-3.5 rounded-2xl bg-bg/70 ring-1 ring-inset ring-accent/30 text-xs space-y-1">
-              <span className="text-[11px] font-mono text-accent uppercase font-bold">Official Prompt Text:</span>
-              <p className="text-fg italic">&ldquo;{activePrompt.promptText}&rdquo;</p>
-              <span className="text-[10px] font-mono text-fg2 block pt-1">
-                Word Limit: {activePrompt.wordLimit} words • Cycle: {activePrompt.admissionCycle}
+      {/* 2. School and prompt */}
+      <Reveal className="mt-4 lg:mt-5">
+        <Panel eyebrow="Step 2" title={schoolSpecific ? 'Which school, which question?' : 'No school needed'}>
+          {!schoolSpecific ? (
+            <p className="flex items-center gap-3 text-[15px] text-fg2">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-phosphor/15 text-phosphor ring-1 ring-inset ring-phosphor/30">
+                <Check className="h-3.5 w-3.5" />
               </span>
+              You write this one once and use it wherever it applies.
+            </p>
+          ) : (
+            <div className="space-y-7">
+              <div>
+                <p className="mb-3 text-sm font-medium text-fg2">School</p>
+                {schools.length === 0 ? (
+                  <p className="text-[15px] text-fg2">No school on your list asks this essay yet.</p>
+                ) : (
+                  <Segmented
+                    layout="wrap"
+                    ariaLabel="School"
+                    value={universityId as string}
+                    onChange={(v) => {
+                      setUniversityId(v);
+                      setPromptId('');
+                      setReview(null);
+                    }}
+                    options={schools.map((u) => ({ value: u.id, label: u.name.replace(/ \(.*\)/, '') }))}
+                  />
+                )}
+              </div>
+
+              {universityId && (
+                <div role="radiogroup" aria-label="Prompt" className="animate-fade-in space-y-3">
+                  <p className="text-sm font-medium text-fg2">Prompt</p>
+                  {prompts.map((p) => {
+                    const on = p.id === promptId;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => {
+                          setPromptId(p.id);
+                          setReview(null);
+                        }}
+                        className={cn(
+                          'w-full rounded-3xl p-5 text-left ring-1 ring-inset transition-[background-color,box-shadow] duration-300 ease-quart-out',
+                          on ? 'bg-accent/10 ring-accent/60' : 'bg-bg/40 ring-line/15 hover:ring-line/35'
+                        )}
+                      >
+                        <span className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-[16px] font-semibold tracking-tight">{p.title}</span>
+                          <span className="flex items-center gap-2">
+                            <span className="tnum text-sm text-fg2">{p.wordLimit} words</span>
+                            {p.dataVerifiedAt === null && <Badge kind="unverified" />}
+                          </span>
+                        </span>
+                        <span className="mt-2 block text-[15px] leading-relaxed text-fg2">&ldquo;{p.promptText}&rdquo;</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
-        </Card>
-      )}
+        </Panel>
+      </Reveal>
 
-      {/* 4. Step 3: Editor & Review Split Screen */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column (7 cols): Draft Editor */}
-        <div className="lg:col-span-7 space-y-4">
-          <Card className="bg-surface ring-1 ring-inset ring-line/10 relative">
-            <div className="flex items-center justify-between pb-3 border-b border-line/10">
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-accent text-accent-fg font-bold inline-flex items-center justify-center text-[10px]">
-                  3
-                </span>
-                <h3 className="font-editorial text-xl font-bold text-fg">
-                  Drafting Canvas
-                </h3>
-              </div>
-
-              {/* Status Indicator */}
+      {/* 3. Write and review */}
+      <div className="mt-4 grid gap-4 lg:mt-5 lg:grid-cols-12 lg:gap-5">
+        <Reveal className="lg:col-span-7">
+          <Panel
+            eyebrow="Step 3"
+            title="Your draft"
+            className="h-full"
+            action={
               <div className="flex items-center gap-3">
-                <span
-                  className={`text-xs font-mono font-medium ${
-                    isOverLimit
-                      ? 'text-murram-light font-bold'
-                      : isNearLimit
-                      ? 'text-accent'
-                      : 'text-fg2'
-                  }`}
-                >
-                  {wordCount} / {activeWordLimit} words
-                  {isOverLimit && ` (over by ${wordCount - activeWordLimit})`}
-                </span>
-              </div>
-            </div>
-
-            {/* Lock Guard for School-Specific Types */}
-            {!isEditorUnlocked ? (
-              <div className="py-16 text-center space-y-3 bg-bg/40 rounded-2xl border border-dashed border-line/15 p-6 my-4">
-                <div className="w-12 h-12 rounded-full bg-murram/20 ring-1 ring-inset ring-murram/40 flex items-center justify-center mx-auto text-murram-light">
-                  <Lock className="w-6 h-6" />
+                <div className="text-right">
+                  <p className={cn('tnum text-sm font-medium', over ? 'text-murram-light' : 'text-fg')}>
+                    {words} / {limit}
+                  </p>
+                  <p className="text-xs text-fg2">{over ? `over by ${words - limit}` : 'words'}</p>
                 </div>
-                <h4 className="font-editorial text-lg font-bold text-fg">
-                  Prompt Selection Required
-                </h4>
-                <p className="text-xs text-fg2 max-w-md mx-auto">
-                  This is a school-specific essay type ({currentTypeObj.label}). To prevent generic drafting, you must select your target university and exact prompt above before the editor unlocks.
-                </p>
+                <ProgressRing value={Math.min(1, words / limit)} size={44} stroke={4} tone={over ? 'warn' : 'accent'} label={`${words} of ${limit} words`} />
               </div>
+            }
+          >
+            {!unlocked ? (
+              <EmptyState
+                icon={Lock}
+                title="Choose the school and prompt first"
+                body={`${type.label} is different at every school, so Pepea needs the exact question before you start. Pick one above.`}
+              />
             ) : (
-              <div className="pt-3 space-y-3">
+              <>
                 <Textarea
+                  label="Draft"
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
-                  wordLimit={activeWordLimit}
-                  className="min-h-[280px]"
-                  placeholder="Start drafting your scene here. Avoid generic Insha openings..."
+                  className="min-h-[340px] text-[17px] leading-[1.75]"
+                  placeholder="Start in the middle of a scene. Skip the generic opening."
                 />
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-                  <span className="text-xs font-mono text-fg2">
-                    Autosaved to local memory
-                  </span>
-                  <Button
-                    variant="primary"
-                    size="md"
-                    onClick={handleRunReview}
-                    isLoading={isReviewing}
-                    disabled={wordCount < 15 || isOverLimit}
-                    className="text-xs"
-                  >
-                    <Sparkles className="w-4 h-4 mr-1.5" />
-                    Roast with Gemini 2.5
+                <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-fg2" aria-live="polite">
+                    {savedAt ? `Saved on this phone at ${savedAt}` : 'Saved on this phone as you type'}
+                  </p>
+                  <Button onClick={runReview} loading={reviewing} disabled={words < 15 || over}>
+                    <Sparkles className="h-4 w-4" />
+                    Review my draft
                   </Button>
                 </div>
-              </div>
+              </>
             )}
-          </Card>
-        </div>
+          </Panel>
+        </Reveal>
 
-        {/* Right Column (5 cols): Rubric & Roast Results */}
-        <div className="lg:col-span-5 space-y-4">
-          {reviewResult ? (
-            <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-5">
-              {/* Committee Verdict & Overall Score */}
-              <div className="flex items-center justify-between pb-4 border-b border-line/10">
-                <div>
-                  <span className="text-[11px] font-mono uppercase text-fg2 tracking-wider">
-                    Committee Verdict
-                  </span>
-                  <h4 className="font-editorial text-2xl font-bold text-fg">
-                    {reviewResult.verdict}
-                  </h4>
+        <Reveal delay={0.08} className="lg:col-span-5">
+          <div className="lg:sticky lg:top-8">
+            {review ? (
+              <Panel
+                glow
+                eyebrow="Review"
+                title={persona === 'ivy_committee_chair' ? 'Strict reader' : 'Kenyan mentor'}
+                action={<Badge kind="indicative">Sample review</Badge>}
+              >
+                <div key={review.overallScore} className="flex items-end justify-between gap-4">
+                  <Stat label="Overall" value={String(review.overallScore)} unit="/ 100" size="md" gradient />
+                  <p className="pb-1 text-right text-lg font-semibold tracking-tight">{review.verdict}</p>
                 </div>
-                <div className="text-right">
-                  <span className="text-3xl font-editorial font-bold text-accent">
-                    {reviewResult.overallScore}
-                  </span>
-                  <span className="text-xs font-mono text-fg2 block">/ 100 pts</span>
-                </div>
-              </div>
 
-              {/* Rubric Score Bars */}
-              <div className="space-y-3">
-                <p className="text-xs font-mono uppercase text-fg2 tracking-wider">
-                  Rubric Breakdown ({currentTypeObj.label}):
-                </p>
-                {currentTypeObj.rubric.map((r) => {
-                  const score = reviewResult.rubricScores[r.key] || Math.round(r.max * 0.85);
-                  const percent = Math.round((score / r.max) * 100);
-                  return (
-                    <div key={r.key} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-fg">{r.label}</span>
-                        <span className="font-mono text-accent">
-                          {score}/{r.max}
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 bg-bg rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-accent transition-all duration-500 rounded-full"
-                          style={{ width: `${percent}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                <blockquote className="mt-6 border-l-2 border-accent/60 pl-4 text-[15px] leading-relaxed text-fg/90">{review.committeeSummary}</blockquote>
 
-              {/* Committee Summary */}
-              <div className="p-3.5 rounded-2xl bg-bg/70 ring-1 ring-inset ring-line/10 space-y-1.5 text-xs">
-                <span className="font-mono text-accent font-semibold uppercase text-[10px] block">
-                  Admissions Chair Note:
-                </span>
-                <p className="text-fg leading-relaxed">{reviewResult.committeeSummary}</p>
-              </div>
-
-              {/* Line Edits & Insha Warning */}
-              {reviewResult.lineEdits && reviewResult.lineEdits.length > 0 && (
-                <div className="space-y-2">
-                  <span className="text-xs font-mono uppercase text-murram-light tracking-wider font-semibold block">
-                    Insha Register vs US Voice:
-                  </span>
-                  {reviewResult.lineEdits.map((item, idx) => (
-                    <div key={idx} className="p-3 rounded-xl bg-murram/10 ring-1 ring-inset ring-murram/30 text-xs space-y-1">
-                      <p className="line-through text-fg2 italic">&ldquo;{item.original}&rdquo;</p>
-                      <p className="text-fg font-medium">{item.suggestion}</p>
-                      <p className="text-[11px] text-fg2 pt-0.5">{item.issue}</p>
-                    </div>
+                <div className="mt-7 space-y-5">
+                  {type.rubric.map((r, i) => (
+                    <Meter key={r.key} label={r.label} value={review.rubricScores[r.key] ?? 0} max={r.max} delay={0.1 + i * 0.08} />
                   ))}
                 </div>
-              )}
 
-              {/* Missing Kenyan Context Gaps */}
-              {reviewResult.kenyanContextTips && reviewResult.kenyanContextTips.trim().length > 0 && (
-                <div className="p-3 rounded-xl bg-acacia/20 ring-1 ring-inset ring-acacia/50 text-xs space-y-1">
-                  <span className="font-mono text-[#8CF2A6] font-semibold text-[10px] uppercase block">
-                    Kenyan Context to Clarify:
-                  </span>
-                  <ul className="list-disc list-inside space-y-1 text-fg">
-                    {reviewResult.kenyanContextTips.split('\n').filter(Boolean).map((gap, i) => (
-                      <li key={i}>{gap}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </Card>
-          ) : (
-            <Card className="bg-surface ring-1 ring-inset ring-line/10 text-center py-16 space-y-3">
-              <Sparkles className="w-8 h-8 text-accent mx-auto opacity-40" />
-              <h4 className="font-editorial text-lg font-bold text-fg">
-                No Active Review
-              </h4>
-              <p className="text-xs text-fg2 max-w-xs mx-auto">
-                Type or paste your draft on the left and click &ldquo;Roast with Gemini 2.5&rdquo; to evaluate rubric strengths and word economy.
-              </p>
-            </Card>
-          )}
-        </div>
+                {review.clichesDetected.length > 0 && (
+                  <div className="mt-7">
+                    <p className="mb-2.5 text-micro font-medium uppercase tracking-[0.1em] text-fg2">Clichés spotted</p>
+                    <ul className="flex flex-wrap gap-2">
+                      {review.clichesDetected.map((c) => (
+                        <li key={c} className="rounded-full px-3 py-1.5 text-sm text-murram-light ring-1 ring-inset ring-murram/40">
+                          {c}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </Panel>
+            ) : (
+              <Panel>
+                <EmptyState
+                  icon={Sparkles}
+                  title="Your review appears here"
+                  body="Write at least 15 words, then choose Review my draft."
+                  ussdHint
+                />
+              </Panel>
+            )}
+          </div>
+        </Reveal>
       </div>
+
+      {/* Detail: line edits and context */}
+      {review && (
+        <div className="mt-4 grid gap-4 lg:mt-5 lg:grid-cols-2 lg:gap-5">
+          <Reveal>
+            <Panel eyebrow="Line by line" title="Where it sounds like an Insha" className="h-full">
+              <ul className="space-y-4">
+                {review.lineEdits.map((e, i) => (
+                  <li key={i} className="rounded-3xl bg-bg/40 p-5 ring-1 ring-inset ring-line/10">
+                    <p className="text-[15px] italic text-fg2 line-through decoration-murram-light/60">&ldquo;{e.original}&rdquo;</p>
+                    <p className="mt-3 text-[16px] font-medium leading-snug">{e.suggestion}</p>
+                    <p className="mt-2 text-sm leading-relaxed text-fg2">{e.issue}</p>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          </Reveal>
+
+          <Reveal delay={0.08}>
+            <Panel eyebrow="For a US reader" title="Explain this about Kenya" className="h-full">
+              <ul className="space-y-3">
+                {review.kenyanContextTips
+                  .split('\n')
+                  .filter(Boolean)
+                  .map((tip, i) => (
+                    <li key={i} className="flex gap-3 text-[15px] leading-relaxed">
+                      <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-phosphor" />
+                      {tip}
+                    </li>
+                  ))}
+              </ul>
+              <div className="mt-7 rounded-3xl bg-accent/10 p-5 ring-1 ring-inset ring-accent/30">
+                <p className="text-micro font-medium uppercase tracking-[0.1em] text-accent">One technique to try</p>
+                <p className="mt-2 text-[15px] leading-relaxed">{review.rewriteExample}</p>
+              </div>
+            </Panel>
+          </Reveal>
+        </div>
+      )}
     </div>
   );
 }

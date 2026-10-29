@@ -1,127 +1,176 @@
 'use client';
 
-import React from 'react';
-import {
-  Coins,
-  ExternalLink,
-  ShieldAlert,
-  Calendar,
-  FileCheck,
-  CheckCircle2,
-  HelpCircle,
-} from 'lucide-react';
-import { mockAidMatches, mockAidPrograms } from '@/lib/fixtures';
+import React, { useMemo, useState } from 'react';
+import { ArrowUpRight, ChevronDown, Coins, ShieldAlert } from 'lucide-react';
+import { mockAidMatches } from '@/lib/fixtures';
+import type { AidMatch, AidProgramType } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Reveal } from '@/components/motion/reveal';
+import { PageHero } from '@/components/dashboard/page-hero';
+import { Panel } from '@/components/dashboard/panel';
+import { Meter } from '@/components/dashboard/meter';
+import { Segmented } from '@/components/dashboard/segmented';
+import { EmptyState } from '@/components/dashboard/empty-state';
+import { cn } from '@/lib/utils';
 
-export default function FinancialAidPage() {
+type Filter = 'all' | AidProgramType;
+
+const TYPE_LABEL: Record<AidProgramType, string> = {
+  fee_waiver: 'Fee waiver',
+  institutional_need: 'Need-based aid',
+  institutional_merit: 'Merit aid',
+  external_scholarship: 'Scholarship',
+  pathway_program: 'Free programme',
+};
+
+const usd = (n: number) => `$${n.toLocaleString('en-US')}`;
+const date = (d: string) => new Date(`${d}T12:00:00+03:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+function ProgramCard({ m, first, index }: { m: AidMatch; first: boolean; index: number }) {
+  const [open, setOpen] = useState(first);
+  const p = m.program;
+  const facts: Array<{ k: string; v: string }> = [];
+  if (p.coversFullCost) facts.push({ k: 'Covers', v: 'Full cost' });
+  if (p.amountUsdMin && p.amountUsdMax) facts.push({ k: 'Amount', v: `${usd(p.amountUsdMin)} to ${usd(p.amountUsdMax)}` });
+  facts.push({ k: 'CSS Profile', v: p.requiresCssProfile ? 'Required' : 'Not required' });
+  if (p.deadline) facts.push({ k: 'Deadline', v: date(p.deadline) });
+
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line/10">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-accent uppercase tracking-widest mb-1">
-            <Coins className="w-3.5 h-3.5" />
-            <span>Need-Based &amp; Merit Scholarships</span>
+    <Panel glow={first} className="h-full" bodyClassName="!p-5 sm:!p-7">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge kind="neutral" className="normal-case">{TYPE_LABEL[p.programType]}</Badge>
+        {p.dataVerifiedAt ? <Badge kind="verified" /> : <Badge kind="unverified" />}
+        {first && <Badge kind="target">Best match</Badge>}
+      </div>
+
+      <h2 className="mt-4 text-[clamp(1.4rem,1.1rem+1.2vw,2rem)] font-semibold leading-tight tracking-[-0.03em]">{p.name}</h2>
+      <p className="mt-1.5 text-[15px] text-fg2">{p.provider}</p>
+
+      <div className="mt-6">
+        <Meter label="Match with your profile" value={m.matchScore} max={100} valueLabel={`${m.matchScore}%`} delay={0.15 + index * 0.1} />
+      </div>
+
+      <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+        {facts.map((f) => (
+          <div key={f.k}>
+            <dt className="text-sm text-fg2">{f.k}</dt>
+            <dd className="mt-0.5 text-[15px] font-medium leading-snug">{f.v}</dd>
           </div>
-          <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-fg">
-            Financial Aid Scout
-          </h1>
-          <p className="text-sm text-fg2 mt-1 max-w-2xl">
-            Ranked grant and fee waiver opportunities matched to your household income profile. Over $0 applications with Common App waivers and full-need institutional grants.
-          </p>
+        ))}
+      </dl>
+
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="mt-6 flex w-full items-center justify-between rounded-xl border-t border-line/10 pt-5 text-[15px] font-medium text-accent"
+      >
+        Who qualifies and how to apply
+        <ChevronDown aria-hidden="true" className={cn('h-4 w-4 transition-transform duration-500 ease-expo-out', open && 'rotate-180')} />
+      </button>
+      <div className={cn('grid transition-[grid-template-rows] duration-500 ease-expo-out', open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
+        <div className="overflow-hidden">
+          <div className="grid gap-6 pt-4 md:grid-cols-2">
+            {p.eligibilityMd && (
+              <div>
+                <p className="text-micro font-medium uppercase tracking-[0.1em] text-fg2">Who qualifies</p>
+                <p className="mt-2 text-[15px] leading-relaxed">{p.eligibilityMd}</p>
+              </div>
+            )}
+            {p.howToApplyMd && (
+              <div>
+                <p className="text-micro font-medium uppercase tracking-[0.1em] text-fg2">How to apply</p>
+                <p className="mt-2 text-[15px] leading-relaxed">{p.howToApplyMd}</p>
+              </div>
+            )}
+          </div>
+          {m.reasons.length > 0 && <p className="mt-5 text-sm leading-relaxed text-fg2">Why it matches you: {m.reasons.join(' ')}</p>}
+          {p.officialUrl && (
+            <Button href={p.officialUrl} target="_blank" rel="noopener noreferrer" variant="secondary" size="sm" className="mt-5">
+              Official page <ArrowUpRight className="h-3.5 w-3.5" />
+            </Button>
+          )}
         </div>
       </div>
+    </Panel>
+  );
+}
 
-      <div className="space-y-4">
-        {mockAidMatches.map((m) => {
-          const prog = m.program;
-          return (
-            <Card key={prog.id} className="bg-surface ring-1 ring-inset ring-line/10 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-line/10">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-editorial text-2xl font-bold text-fg">
-                      {prog.name}
-                    </h3>
-                    {prog.dataVerifiedAt ? (
-                      <Badge kind="verified">Verified</Badge>
-                    ) : (
-                      <Badge kind="unverified">Unverified</Badge>
-                    )}
-                  </div>
-                  <p className="text-xs font-mono text-fg2">
-                    Provider: {prog.provider} • Scope:{' '}
-                    <span className="text-accent capitalize">
-                      {prog.programType.replace('_', ' ')}
-                    </span>
-                  </p>
-                </div>
+/** Aid programmes ranked for this student. The ranking is a sample until the aid API ships (BE-API-09). */
+export default function FinancialAidPage() {
+  const [filter, setFilter] = useState<Filter>('all');
 
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-fg2">Match Fit:</span>
-                  <span className="text-xl font-editorial font-bold text-accent">
-                    {m.matchScore}%
-                  </span>
-                </div>
-              </div>
+  const present = useMemo(() => Array.from(new Set(mockAidMatches.map((m) => m.program.programType))), []);
+  const list = mockAidMatches.filter((m) => filter === 'all' || m.program.programType === filter);
+  const needForms = mockAidMatches.filter((m) => m.program.requiresCssProfile).length;
 
-              {/* Eligibility & Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="space-y-1.5 p-3 rounded-2xl bg-bg/50 ring-1 ring-inset ring-line/10">
-                  <span className="font-mono text-fg2 uppercase text-[10px] block">
-                    Eligibility &amp; Coverage
-                  </span>
-                  <p className="text-fg leading-relaxed">{prog.eligibilityMd}</p>
-                  {prog.coversFullCost && (
-                    <span className="inline-block mt-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-acacia/30 text-[#8CF2A6] ring-1 ring-inset ring-acacia/50">
-                      Covers Full Cost of Attendance (100% Need)
-                    </span>
-                  )}
-                </div>
+  return (
+    <div>
+      <PageHero
+        eyebrow="Financial aid"
+        icon={Coins}
+        title={'Find the money,\nand the forms.'}
+        accentWord="money"
+        description="Fee waivers, need-based aid and free programmes, ranked for your family's situation, with the exact forms and deadlines for each."
+        aside={
+          <div className="flex gap-8">
+            <div>
+              <p className="tnum text-[2.5rem] font-semibold leading-none tracking-[-0.05em]">{mockAidMatches.length}</p>
+              <p className="mt-2 text-sm text-fg2">matches</p>
+            </div>
+            <div>
+              <p className="tnum text-[2.5rem] font-semibold leading-none tracking-[-0.05em]">{needForms}</p>
+              <p className="mt-2 text-sm text-fg2">need the CSS Profile</p>
+            </div>
+          </div>
+        }
+      />
 
-                <div className="space-y-1.5 p-3 rounded-2xl bg-bg/50 ring-1 ring-inset ring-line/10">
-                  <span className="font-mono text-fg2 uppercase text-[10px] block">
-                    Application Process &amp; Forms
-                  </span>
-                  <p className="text-fg2 leading-relaxed">
-                    {prog.howToApplyMd || 'Submit with regular college application materials.'}
-                  </p>
-                  <p className="text-[11px] font-mono text-accent pt-1">
-                    CSS Profile Required:{' '}
-                    {prog.requiresCssProfile ? 'Yes' : 'No (Institution or Common App only)'}
-                  </p>
-                </div>
-              </div>
+      <Reveal>
+        <Segmented
+          layout="pill"
+          ariaLabel="Filter by type"
+          value={filter}
+          onChange={setFilter}
+          className="mb-5 max-w-full overflow-x-auto"
+          options={[{ value: 'all' as Filter, label: 'All' }, ...present.map((t) => ({ value: t as Filter, label: TYPE_LABEL[t] }))]}
+        />
+      </Reveal>
 
-              {/* Footer Links & Deadlines */}
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-line/10 text-xs font-mono">
-                <div className="flex items-center gap-4 text-fg2">
-                  {prog.deadline ? (
-                    <span className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-accent" />
-                      Deadline: {prog.deadline}
-                    </span>
-                  ) : (
-                    <span>Follows College Application Deadlines</span>
-                  )}
-                </div>
+      {list.length === 0 ? (
+        <Panel>
+          <EmptyState icon={Coins} title="Nothing here yet" body="No programme of this type matches your profile. Try another filter." action={<Button variant="secondary" onClick={() => setFilter('all')}>Show everything</Button>} />
+        </Panel>
+      ) : (
+        <div className="grid gap-4 lg:gap-5">
+          {list.map((m, i) => (
+            <Reveal key={m.program.id} delay={i * 0.06}>
+              <ProgramCard m={m} first={i === 0 && filter === 'all'} index={i} />
+            </Reveal>
+          ))}
+        </div>
+      )}
 
-                {prog.officialUrl && (
-                  <a
-                    href={prog.officialUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-accent hover:underline"
-                  >
-                    Official Portal <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                )}
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+      <Reveal className="mt-4 lg:mt-5">
+        <Panel>
+          <div className="flex items-start gap-4">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-murram/15 text-murram-light ring-1 ring-inset ring-murram/40">
+              <ShieldAlert className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">Never pay to find or win aid</h2>
+              <p className="mt-1.5 max-w-2xl text-[15px] leading-relaxed text-fg2">
+                Every programme above is free to apply to. If someone asks for a fee to submit an application, secure a scholarship or &ldquo;guarantee&rdquo; a waiver, walk away and check their name on the{' '}
+                <a href="/#safety" className="text-accent underline-offset-4 hover:underline">
+                  scam radar
+                </a>
+                .
+              </p>
+            </div>
+          </div>
+        </Panel>
+      </Reveal>
     </div>
   );
 }
