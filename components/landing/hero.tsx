@@ -49,8 +49,11 @@ export function Hero() {
           </p>
 
           <div className="mt-9 flex animate-rise flex-wrap items-center justify-center gap-x-8 gap-y-4" style={rise(0.1)}>
-            <Button href="#phone" size="lg" magnetic>
-              Try it on a phone
+            <Button href="/dashboard" size="lg" magnetic>
+              Open Dashboard
+            </Button>
+            <Button href="#phone" variant="secondary" size="lg" magnetic>
+              Try USSD on phone
             </Button>
             <Button href="#tools" variant="link" className="text-[17px]">
               See the six tools <span aria-hidden="true">&rsaquo;</span>
