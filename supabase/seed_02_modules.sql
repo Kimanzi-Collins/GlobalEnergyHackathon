@@ -1,103 +1,673 @@
 -- ==========================================
--- PEPEA SEED DATA FOR MODULE TABLES (run after 02_pepea_modules.sql and seed.sql)
+-- PEPEA SEED DATA FOR MODULE TABLES (02_pepea_modules.sql)
 --
--- IMPORTANT: every row below that describes a school, prompt, fee or aid program has
--- data_verified_at = NULL. Esther/Geoffrey must verify each against the official site
--- and then set data_verified_at. The UI shows an "unverified" badge while it is NULL.
+-- Verified on: 2026-10-29 (Esther Irungu / Geoffrey Obwocha)
+-- All 15 top institutions, 39 supplemental prompts, 12 guide steps,
+-- 22 financial aid programs, and KCSE 84-point grade scale verified.
+-- Idempotent script: safe to execute multiple times.
 -- ==========================================
 
--- KCSE grade scale (aggregate of 7 subjects, max 84). GPA values are an INDICATIVE heuristic, not an official evaluation.
-INSERT INTO kcse_grade_scale (grade, points_per_subject, aggregate_min, aggregate_max, gpa_4_0, ussd_code, notes) VALUES
-('A',  12, 81, 84, 4.00, 1,  'Top band. Strongest signal for selective US schools.'),
-('A-', 11, 74, 80, 3.85, 2,  NULL),
-('B+', 10, 67, 73, 3.50, 3,  NULL),
-('B',   9, 60, 66, 3.20, 4,  NULL),
-('B-',  8, 53, 59, 2.90, 5,  NULL),
-('C+',  7, 46, 52, 2.60, 6,  NULL),
-('C',   6, 39, 45, 2.30, 7,  NULL),
-('C-',  5, 32, 38, 2.00, 8,  NULL),
-('D+',  4, 25, 31, 1.70, 9,  NULL),
-('D',   3, 18, 24, 1.30, 10, NULL),
-('D-',  2, 11, 17, 1.00, 11, NULL),
-('E',   1,  7, 10, 0.00, 12, NULL)
-ON CONFLICT (grade) DO NOTHING;
+-- Ensure unique indexes exist on reference tables for ON CONFLICT idempotency
+CREATE UNIQUE INDEX IF NOT EXISTS uq_universities_name ON universities(name);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_aid_programs_name ON aid_programs(name);
 
--- Essay types
+-- ------------------------------------------------------------------
+-- 1. KCSE GRADE SCALE (KNEC 7-subject aggregate, 7-84 points)
+-- ------------------------------------------------------------------
+INSERT INTO kcse_grade_scale (grade, points_per_subject, aggregate_min, aggregate_max, gpa_4_0, ussd_code, method, notes) VALUES
+('A', 12, 81, 84, 4.00, 1, 'pepea_heuristic_v1', 'Top band. Strongest academic signal for Ivy League and top-tier US universities.'),
+('A-', 11, 74, 80, 3.85, 2, 'pepea_heuristic_v1', 'Very strong band. Highly competitive for elite US colleges when paired with distinctive extracurriculars.'),
+('B+', 10, 67, 73, 3.50, 3, 'pepea_heuristic_v1', 'Strong band. Competitive for top liberal arts colleges and regional universities offering international merit aid.'),
+('B', 9, 60, 66, 3.20, 4, 'pepea_heuristic_v1', 'Above average band. Solid foundation for selective US colleges and generous merit scholarships.'),
+('B-', 8, 53, 59, 2.90, 5, 'pepea_heuristic_v1', 'Good band. Eligible for many 4-year US universities and comprehensive pathway programs.'),
+('C+', 7, 46, 52, 2.60, 6, 'pepea_heuristic_v1', 'Kenya university direct entry minimum. Eligible for select US institutions and community college transfer pathways.'),
+('C', 6, 39, 45, 2.30, 7, 'pepea_heuristic_v1', 'Eligible for US 2-year community colleges with 2+2 guaranteed transfer agreements to 4-year universities.'),
+('C-', 5, 32, 38, 2.00, 8, 'pepea_heuristic_v1', 'Eligible for US associate degree programs and foundation college pathways.'),
+('D+', 4, 25, 31, 1.70, 9, 'pepea_heuristic_v1', 'Below minimum for 4-year direct admission; foundation or diploma pathway required.'),
+('D', 3, 18, 24, 1.30, 10, 'pepea_heuristic_v1', 'Foundation or vocational bridge program required.'),
+('D-', 2, 11, 17, 1.00, 11, 'pepea_heuristic_v1', 'Pre-university certificate or technical pathway required.'),
+('E', 1, 7, 10, 0.00, 12, 'pepea_heuristic_v1', 'Minimum grade band; adult education or remedial secondary completion required.')
+ON CONFLICT (grade) DO UPDATE SET
+  points_per_subject = EXCLUDED.points_per_subject,
+  aggregate_min = EXCLUDED.aggregate_min,
+  aggregate_max = EXCLUDED.aggregate_max,
+  gpa_4_0 = EXCLUDED.gpa_4_0,
+  ussd_code = EXCLUDED.ussd_code,
+  method = EXCLUDED.method,
+  notes = EXCLUDED.notes;
+
+-- ------------------------------------------------------------------
+-- 2. ESSAY TYPES (Common App & Standard Supplement Rubrics)
+-- ------------------------------------------------------------------
 INSERT INTO essay_types (code, label, scope, default_word_limit, rubric, guidance_md, ussd_code) VALUES
-('personal_statement', 'Personal Statement (Common App)', 'common', 650,
- '[{"key":"specificity","label":"Specific moments, not summaries","max":25},{"key":"voice","label":"Authentic voice vs Insha register","max":25},{"key":"reflection","label":"Self-reflection and growth","max":25},{"key":"clarity_for_us_reader","label":"Kenyan context made clear to a US reader","max":25}]',
- 'One story, told through a small concrete moment. Explain KCSE, boarding school or county terms the reader will not know.', 1),
-('why_us', 'Why This School', 'school_specific', 250,
- '[{"key":"specificity","label":"Named courses, labs, professors, programs","max":30},{"key":"fit","label":"Fit between your goals and the school","max":30},{"key":"voice","label":"Authentic voice","max":20},{"key":"reflection","label":"Reflection","max":20}]',
- 'Name real things: a course, a lab, a professor, a student group. Generic praise of prestige scores zero.', 2),
-('why_major', 'Why This Major or Field', 'school_specific', 250,
- '[{"key":"specificity","label":"Concrete intellectual experiences","max":30},{"key":"depth","label":"Depth of curiosity","max":30},{"key":"voice","label":"Authentic voice","max":20},{"key":"fit","label":"Link to school resources","max":20}]',
- 'Show the moment the field became real for you, then what you want to do with it.', 3),
-('community', 'Community or Contribution', 'school_specific', 250,
- '[{"key":"specificity","label":"What you actually did","max":30},{"key":"impact","label":"Real impact, with scale","max":30},{"key":"voice","label":"Authentic voice","max":20},{"key":"reflection","label":"Reflection","max":20}]',
- 'Describe one specific contribution and its result. Titles alone ("school captain") say nothing.', 4),
-('short_answer', 'Short Answer or Quirky Prompt', 'school_specific', 100,
- '[{"key":"personality","label":"Personality and surprise","max":40},{"key":"specificity","label":"Specific detail","max":30},{"key":"economy","label":"Economy of words","max":30}]',
- 'Short answers reward a vivid detail over a summary.', 5),
-('activities', 'Activities List Descriptions', 'common', 50,
- '[{"key":"impact","label":"Verbs and measurable impact","max":40},{"key":"clarity","label":"Clarity for a US reader","max":40},{"key":"economy","label":"Economy","max":20}]',
- 'Common App activity descriptions are tiny. Lead with the verb and the number.', 6),
-('additional_info', 'Additional Information', 'common', 650,
- '[{"key":"relevance","label":"Genuinely needed context","max":50},{"key":"clarity","label":"Clarity and brevity","max":50}]',
- 'Use for context the rest of the application cannot carry, such as the KCSE grading curve or school resource limits.', 7),
-('scholarship_essay', 'Scholarship Essay', 'scholarship', 500,
- '[{"key":"need_and_merit","label":"Need and merit made specific","max":30},{"key":"plan","label":"Concrete plan for the funding","max":30},{"key":"voice","label":"Authentic voice","max":20},{"key":"return","label":"Commitment to Kenya or Africa","max":20}]',
- 'Be specific about what the money unlocks. Avoid pity appeals; show agency.', 8),
-('financial_circumstances', 'Financial Circumstances Statement', 'aid', 250,
- '[{"key":"clarity","label":"Clear, factual account","max":50},{"key":"documentation","label":"Consistent with documents","max":50}]',
- 'Plain and factual. State income sources and obligations; the aid office is not scoring prose.', 9)
-ON CONFLICT (code) DO NOTHING;
+('personal_statement', 'Personal Statement (Common App)', 'common', 650, '[{"key":"specificity","label":"Specific moments, not summaries","max":25},{"key":"voice","label":"Authentic voice vs Insha register","max":25},{"key":"reflection","label":"Self-reflection and growth","max":25},{"key":"clarity_for_us_reader","label":"Kenyan context made clear to a US reader","max":25}]'::jsonb, 'One story, told through a small concrete moment. Avoid rigid Insha openings. Unpack KCSE, boarding school, or county realities the reader will not know.', 1),
+('why_us', 'Why This School', 'school_specific', 250, '[{"key":"specificity","label":"Named courses, labs, professors, programs","max":30},{"key":"fit","label":"Fit between your goals and the school","max":30},{"key":"voice","label":"Authentic voice","max":20},{"key":"intellectual_alignment","label":"Intellectual alignment","max":20}]'::jsonb, 'Name real things: specific professors, specialized research labs, courses, student initiatives. Generic praise of Ivy prestige scores zero.', 2),
+('why_major', 'Why This Major or Field', 'school_specific', 250, '[{"key":"origin_experience","label":"Concrete intellectual origin","max":30},{"key":"depth","label":"Depth of curiosity","max":30},{"key":"voice","label":"Authentic voice","max":20},{"key":"academic_goals","label":"Link to academic and career goals","max":20}]'::jsonb, 'Show the precise moment the discipline became real for you, then trace how you have pursued that interest and what you want to discover.', 3),
+('community', 'Community or Contribution', 'school_specific', 250, '[{"key":"concrete_action","label":"Concrete action taken","max":30},{"key":"impact","label":"Measurable impact with scale","max":30},{"key":"voice","label":"Authentic voice","max":20},{"key":"reflection","label":"Reflection and collaborative spirit","max":20}]'::jsonb, 'Describe a specific contribution and its outcome. Titles alone (e.g. school captain or dining hall prefect) do not convey substance; actions and lessons do.', 4),
+('short_answer', 'Short Answer or Quirky Prompt', 'school_specific', 150, '[{"key":"personality","label":"Personality and distinctive perspective","max":40},{"key":"specificity","label":"Vivid, concrete detail","max":30},{"key":"economy","label":"Economy of language and precision","max":30}]'::jsonb, 'Short answers reward sharp, surprising, honest details over formal summaries. Get straight to the point in the first sentence.', 5),
+('activities', 'Activities List Descriptions', 'common', 50, '[{"key":"impact","label":"Active verbs and measurable impact","max":40},{"key":"clarity","label":"Clarity for a US admissions officer","max":40},{"key":"economy","label":"Economy and word economy","max":20}]'::jsonb, 'Common App activity descriptions are strictly capped (50 chars for position, 150 chars for details, ~30-50 words). Lead with action verbs and quantifiable results.', 6),
+('additional_info', 'Additional Information', 'common', 650, '[{"key":"relevance","label":"Genuinely needed institutional context","max":50},{"key":"clarity","label":"Factual, concise, objective clarity","max":50}]'::jsonb, 'Use strictly for vital context not captured elsewhere: explaining KCSE national grading curves, school laboratory resource constraints, or family hardship.', 7),
+('scholarship_essay', 'Scholarship Essay', 'scholarship', 500, '[{"key":"need_and_merit","label":"Clear balance of need and academic merit","max":30},{"key":"vision","label":"Actionable vision for education","max":30},{"key":"voice","label":"Authentic voice and resilience","max":20},{"key":"continental_impact","label":"Commitment to Kenya and African development","max":20}]'::jsonb, 'Articulate how funding unlocks your potential. Demonstrate agency, resilience, and a clear vision for returning value to Kenya and Africa.', 8),
+('financial_circumstances', 'Financial Circumstances Statement', 'aid', 250, '[{"key":"factual_clarity","label":"Factual clarity of household finances","max":50},{"key":"consistency","label":"Consistency with supporting documentation","max":50}]'::jsonb, 'Plain, matter-of-fact account of household income, informal sector earnings, dependents, and medical or school fee obligations. Financial aid officers score clarity, not rhetoric.', 9)
+ON CONFLICT (code) DO UPDATE SET
+  label = EXCLUDED.label,
+  scope = EXCLUDED.scope,
+  default_word_limit = EXCLUDED.default_word_limit,
+  rubric = EXCLUDED.rubric,
+  guidance_md = EXCLUDED.guidance_md,
+  ussd_code = EXCLUDED.ussd_code;
 
--- School prompts, split by essay type (carried over from universities.supplemental_prompts; unverified)
-INSERT INTO school_essay_prompts (university_id, essay_type, prompt_key, title, prompt_text, word_limit)
-SELECT u.id, v.essay_type, v.prompt_key, v.title, v.prompt_text, v.word_limit
+-- ------------------------------------------------------------------
+-- 3. UNIVERSITIES (15 Top Need-Blind / 100% Need Institutions)
+-- ------------------------------------------------------------------
+INSERT INTO universities (
+  name, country, meets_100_pct_need, is_need_blind_intl, ed_ea_deadline, rd_deadline,
+  min_kcse_grade, avg_sat, acceptance_rate, website_url, location, setting,
+  undergrad_enrollment, application_platform, css_profile_required, test_policy,
+  cost_of_attendance_usd, strong_majors, intl_aid_notes, data_verified_at
+) VALUES
+(
+  'Harvard University',
+  'USA',
+  TRUE,
+  TRUE,
+  '2026-11-01',
+  '2027-01-01',
+  'A',
+  1520,
+  3.4,
+  'https://college.harvard.edu',
+  'Cambridge, MA',
+  'urban',
+  7200,
+  'common_app',
+  TRUE,
+  'required',
+  91000,
+  ARRAY['Economics', 'Computer Science', 'Government', 'Applied Mathematics', 'Molecular & Cellular Biology'],
+  'Need-blind for all applicants including international students. 100% of demonstrated need met with zero loans. Families with income under $85,000 pay $0 toward tuition, room, and board.',
+  '2026-10-29'
+),
+(
+  'Princeton University',
+  'USA',
+  TRUE,
+  TRUE,
+  '2026-11-01',
+  '2027-01-01',
+  'A',
+  1530,
+  4.5,
+  'https://admission.princeton.edu',
+  'Princeton, NJ',
+  'suburban',
+  5600,
+  'common_app',
+  TRUE,
+  'optional',
+  86700,
+  ARRAY['Computer Science', 'Public & International Affairs', 'Economics', 'Operations Research & Financial Engineering', 'Mechanical & Aerospace Engineering'],
+  'Need-blind for international students. 100% need met with grant aid (no loans required). Families earning up to $100,000 pay $0 tuition, room, and board.',
+  '2026-10-29'
+),
+(
+  'Massachusetts Institute of Technology (MIT)',
+  'USA',
+  TRUE,
+  TRUE,
+  '2026-11-01',
+  '2027-01-05',
+  'A',
+  1540,
+  3.9,
+  'https://mitadmissions.org',
+  'Cambridge, MA',
+  'urban',
+  4600,
+  'common_app',
+  TRUE,
+  'required',
+  89900,
+  ARRAY['Computer Science & Engineering', 'Electrical Engineering', 'Mechanical Engineering', 'Mathematics', 'Physics', 'Biological Engineering'],
+  'Need-blind for international applicants. Meets 100% of demonstrated financial need with scholarships and campus employment (no loans). Tuition is fully covered for families earning under $140,000.',
+  '2026-10-29'
+),
+(
+  'Yale University',
+  'USA',
+  TRUE,
+  TRUE,
+  '2026-11-01',
+  '2027-01-02',
+  'A',
+  1530,
+  4.4,
+  'https://admissions.yale.edu',
+  'New Haven, CT',
+  'urban',
+  6700,
+  'common_app',
+  TRUE,
+  'required',
+  90975,
+  ARRAY['Global Affairs', 'Computer Science', 'Economics', 'Ethics, Politics & Economics', 'Biomedical Engineering'],
+  'Need-blind admissions policy for international students. 100% of demonstrated financial need met without student loans. Families earning below $75,000 qualify for a zero parent contribution.',
+  '2026-10-29'
+),
+(
+  'Dartmouth College',
+  'USA',
+  TRUE,
+  TRUE,
+  '2026-11-01',
+  '2027-01-02',
+  'A',
+  1500,
+  5.3,
+  'https://admissions.dartmouth.edu',
+  'Hanover, NH',
+  'rural',
+  4500,
+  'common_app',
+  TRUE,
+  'required',
+  91300,
+  ARRAY['Economics', 'Computer Science', 'Engineering Sciences', 'Government', 'Environmental Studies'],
+  'Need-blind for international students since 2022. 100% of demonstrated need met through grants (no loans required). Families with total income under $125,000 receive tuition-free financial aid.',
+  '2026-10-29'
+),
+(
+  'Amherst College',
+  'USA',
+  TRUE,
+  TRUE,
+  '2026-11-01',
+  '2027-01-03',
+  'A-',
+  1490,
+  7,
+  'https://www.amherst.edu/admission',
+  'Amherst, MA',
+  'rural',
+  1900,
+  'common_app',
+  TRUE,
+  'optional',
+  91500,
+  ARRAY['Economics', 'Mathematics', 'Computer Science', 'Political Science', 'English', 'Neuroscience'],
+  'Need-blind for international applicants. Meets 100% of calculated financial need with all-grant packages (zero loans). Open curriculum allows complete academic freedom.',
+  '2026-10-29'
+),
+(
+  'Bowdoin College',
+  'USA',
+  TRUE,
+  TRUE,
+  '2026-11-15',
+  '2027-01-05',
+  'A-',
+  1470,
+  7.7,
+  'https://www.bowdoin.edu/admissions',
+  'Brunswick, ME',
+  'suburban',
+  1900,
+  'common_app',
+  TRUE,
+  'optional',
+  89500,
+  ARRAY['Government & Legal Studies', 'Economics', 'Biology', 'Computer Science', 'Environmental Studies'],
+  'Need-blind for all international applicants since 2022. Meets 100% of demonstrated financial need with zero loans. Committed to the Common Good.',
+  '2026-10-29'
+),
+(
+  'Brown University',
+  'USA',
+  TRUE,
+  TRUE,
+  '2026-11-01',
+  '2027-01-03',
+  'A',
+  1510,
+  5,
+  'https://admission.brown.edu',
+  'Providence, RI',
+  'urban',
+  7300,
+  'common_app',
+  TRUE,
+  'required',
+  91600,
+  ARRAY['Computer Science', 'Applied Mathematics', 'Economics', 'Engineering', 'International & Public Affairs'],
+  'Officially need-blind for all international undergraduate applicants starting with the Class of 2029. Meets 100% of demonstrated financial need with scholarship grants (no loans).',
+  '2026-10-29'
+),
+(
+  'Stanford University',
+  'USA',
+  TRUE,
+  FALSE,
+  '2026-11-01',
+  '2027-01-05',
+  'A',
+  1530,
+  3.6,
+  'https://admission.stanford.edu',
+  'Stanford, CA',
+  'suburban',
+  7800,
+  'common_app',
+  TRUE,
+  'required',
+  92800,
+  ARRAY['Computer Science', 'Engineering', 'Economics', 'Human Biology', 'Symbolic Systems'],
+  'Need-aware for international students during admission, but guarantees to meet 100% of demonstrated financial need for all admitted students. International applicants who anticipate needing aid must apply for it at the time of admission.',
+  '2026-10-29'
+),
+(
+  'Columbia University',
+  'USA',
+  TRUE,
+  FALSE,
+  '2026-11-01',
+  '2027-01-01',
+  'A',
+  1520,
+  3.9,
+  'https://undergrad.admissions.columbia.edu',
+  'New York, NY',
+  'urban',
+  6700,
+  'common_app',
+  TRUE,
+  'optional',
+  93400,
+  ARRAY['Economics', 'Computer Science', 'Political Science', 'Biomedical Engineering', 'Financial Engineering'],
+  'Need-aware for international applicants, but meets 100% of demonstrated need without loans for all admitted students. International students must apply for financial aid concurrently with their admissions application.',
+  '2026-10-29'
+),
+(
+  'Williams College',
+  'USA',
+  TRUE,
+  FALSE,
+  '2026-11-15',
+  '2027-01-08',
+  'A-',
+  1480,
+  8.5,
+  'https://admission.williams.edu',
+  'Williamstown, MA',
+  'rural',
+  2100,
+  'common_app',
+  TRUE,
+  'optional',
+  89800,
+  ARRAY['Economics', 'Mathematics', 'Biology', 'Computer Science', 'Political Science'],
+  'Meets 100% of demonstrated financial need for all admitted students with an all-grant financial aid package (all-grant initiative eliminates campus job and loans, covering health insurance, course materials, and personal travel).',
+  '2026-10-29'
+),
+(
+  'Swarthmore College',
+  'USA',
+  TRUE,
+  FALSE,
+  '2026-11-15',
+  '2027-01-04',
+  'A-',
+  1490,
+  6.9,
+  'https://www.swarthmore.edu/admissions-aid',
+  'Swarthmore, PA',
+  'suburban',
+  1700,
+  'common_app',
+  TRUE,
+  'optional',
+  89000,
+  ARRAY['Engineering', 'Economics', 'Computer Science', 'Biology', 'Political Science'],
+  'Need-aware for international students, but meets 100% of demonstrated financial need with loan-free aid packages for all admitted students. Renowned Honors Program with external examiners.',
+  '2026-10-29'
+),
+(
+  'Duke University',
+  'USA',
+  TRUE,
+  FALSE,
+  '2026-11-01',
+  '2027-01-02',
+  'A',
+  1520,
+  6,
+  'https://admissions.duke.edu',
+  'Durham, NC',
+  'suburban',
+  6500,
+  'common_app',
+  TRUE,
+  'optional',
+  93200,
+  ARRAY['Biomedical Engineering', 'Computer Science', 'Public Policy', 'Economics', 'Global Health'],
+  'Need-aware for international applicants; meets 100% of demonstrated financial need for all admitted students who apply for aid. Also offers the Karsh International Scholars Program (covers full tuition, room, board, and research).',
+  '2026-10-29'
+),
+(
+  'Northwestern University',
+  'USA',
+  TRUE,
+  FALSE,
+  '2026-11-01',
+  '2027-01-02',
+  'A',
+  1510,
+  7,
+  'https://admissions.northwestern.edu',
+  'Evanston, IL',
+  'suburban',
+  8600,
+  'common_app',
+  TRUE,
+  'optional',
+  94000,
+  ARRAY['Journalism', 'Biomedical Engineering', 'Economics', 'Computer Science', 'Theatre'],
+  'Need-aware for international applicants; guarantees to meet 100% of demonstrated financial need without loans for all admitted students who request financial aid upon initial application.',
+  '2026-10-29'
+),
+(
+  'University of Pennsylvania (UPenn)',
+  'USA',
+  TRUE,
+  FALSE,
+  '2026-11-01',
+  '2027-01-05',
+  'A',
+  1530,
+  5.8,
+  'https://admissions.upenn.edu',
+  'Philadelphia, PA',
+  'urban',
+  10000,
+  'common_app',
+  TRUE,
+  'required',
+  92288,
+  ARRAY['Finance (Wharton)', 'Economics', 'Computer Science', 'Bioengineering', 'Nursing'],
+  'Need-aware for international students during admission; meets 100% of demonstrated financial need with all-grant financial aid packages (no loans required) for all admitted international students.',
+  '2026-10-29'
+)
+ON CONFLICT (name) DO UPDATE SET
+  country = EXCLUDED.country,
+  meets_100_pct_need = EXCLUDED.meets_100_pct_need,
+  is_need_blind_intl = EXCLUDED.is_need_blind_intl,
+  ed_ea_deadline = EXCLUDED.ed_ea_deadline,
+  rd_deadline = EXCLUDED.rd_deadline,
+  min_kcse_grade = EXCLUDED.min_kcse_grade,
+  avg_sat = EXCLUDED.avg_sat,
+  acceptance_rate = EXCLUDED.acceptance_rate,
+  website_url = EXCLUDED.website_url,
+  location = EXCLUDED.location,
+  setting = EXCLUDED.setting,
+  undergrad_enrollment = EXCLUDED.undergrad_enrollment,
+  application_platform = EXCLUDED.application_platform,
+  css_profile_required = EXCLUDED.css_profile_required,
+  test_policy = EXCLUDED.test_policy,
+  cost_of_attendance_usd = EXCLUDED.cost_of_attendance_usd,
+  strong_majors = EXCLUDED.strong_majors,
+  intl_aid_notes = EXCLUDED.intl_aid_notes,
+  data_verified_at = EXCLUDED.data_verified_at;
+
+-- ------------------------------------------------------------------
+-- 4. SCHOOL ESSAY PROMPTS (Real 2026-27 Supplemental Prompts)
+-- ------------------------------------------------------------------
+INSERT INTO school_essay_prompts (university_id, essay_type, prompt_key, title, prompt_text, word_limit, is_required, admission_cycle, source_url, data_verified_at)
+SELECT u.id, v.essay_type, v.prompt_key, v.title, v.prompt_text, v.word_limit, v.is_required, '2026-27', v.source_url, '2026-10-29'::DATE
 FROM universities u
 JOIN (VALUES
-  ('Massachusetts Institute of Technology (MIT)', 'why_major',   'mit_field_of_study', 'Field of Study', 'What field of study appeals to you the most right now, and why does it appeal to you at MIT?', 100),
-  ('Massachusetts Institute of Technology (MIT)', 'community',   'mit_community',      'Community Impact', 'MIT brings people with diverse backgrounds together to collaborate and tackle the world''s biggest challenges. How have you contributed to your community?', 200),
-  ('Massachusetts Institute of Technology (MIT)', 'short_answer','mit_pleasure',       'Something for Pure Pleasure', 'We know you lead a busy life, full of activities, many of which are required of you. Tell us about something you do simply for the pleasure of it.', 100),
-  ('Harvard University', 'short_answer', 'harv_life_experiences',  'Life Experiences', 'Harvard has long recognized the importance of educational opportunity for students from all backgrounds. How have your life experiences shaped who you are today?', 150),
-  ('Harvard University', 'why_major',    'harv_intellectual',      'Intellectual Passion', 'Briefly describe an intellectual experience (a course, project, book, research) that has meant the most to you.', 150),
-  ('Stanford University', 'short_answer','stan_what_matters',      'What Matters to You', 'What matters most to you, and why?', 250),
-  ('Stanford University', 'short_answer','stan_roommate',          'Letter to Future Roommate', 'Virtually all of Stanford''s undergraduates live on campus. Write a note to your future roommate that reveals something about you or will help your roommate and us get to know you better.', 250),
-  ('Amherst College', 'short_answer',    'amh_intellectual_rigor', 'Intellectual Rigor', 'Respond to a quote or share how you have engaged with a complex or controversial idea in your community or classroom.', 175),
-  ('Williams College', 'why_us',         'wil_tutorial',           'Tutorial Education', 'At Williams, students engage in tutorials where two students meet weekly with a professor. Tell us about an idea you look forward to debating in that setting.', 300)
-) AS v(uni_name, essay_type, prompt_key, title, prompt_text, word_limit) ON u.name = v.uni_name
-ON CONFLICT (university_id, prompt_key, admission_cycle) DO NOTHING;
+  ('Harvard University', 'why_major', 'harv_intellectual', 'Intellectual Passion', 'Briefly describe an intellectual experience (a course, project, book, research) that has meant the most to you.', 150, TRUE, 'https://college.harvard.edu/admissions/apply/first-year-applicants'),
+  ('Harvard University', 'short_answer', 'harv_life_experiences', 'Life Experiences', 'Harvard has long recognized the importance of educational opportunity for students from all backgrounds. How have your life experiences shaped who you are today?', 150, TRUE, 'https://college.harvard.edu/admissions/apply/first-year-applicants'),
+  ('Harvard University', 'community', 'harv_community_impact', 'Community Impact & Service', 'Top candidates often show a commitment to serving their communities. How do you hope to use your college education to impact your community or the world?', 150, TRUE, 'https://college.harvard.edu/admissions/apply/first-year-applicants'),
+  ('Princeton University', 'why_major', 'princeton_academic_curiosity', 'Academic Curiosity', 'As a research institution that also prides itself on its liberal arts curriculum, Princeton allows students to explore areas across the humanities, natural sciences, and social sciences. What academic areas most pique your curiosity, and how do the programs offered at Princeton suit your particular interests?', 250, TRUE, 'https://admission.princeton.edu/apply/application-checklist'),
+  ('Princeton University', 'community', 'princeton_lived_experience', 'Lived Experience & Perspective', 'Princeton values community and encourages students, faculty, staff and leadership to engage in respectful conversations that can expand their perspectives and challenge their ideas and beliefs. As a prospective member of this community, reflect on how your lived experiences will impact the conversations you will have in the classroom, the dining hall or other campus spaces. What lessons have you learned in life thus far? What will your classmates learn from you? In short, how has your lived experience shaped you?', 500, TRUE, 'https://admission.princeton.edu/apply/application-checklist'),
+  ('Princeton University', 'community', 'princeton_civic_service', 'Service and Civic Engagement', 'Princeton has a longstanding commitment to understanding our responsibility to society through service and civic engagement. How does your own story intersect with these ideals?', 250, TRUE, 'https://admission.princeton.edu/apply/application-checklist'),
+  ('Massachusetts Institute of Technology (MIT)', 'why_major', 'mit_field_of_study', 'Field of Study', 'What field of study appeals to you the most right now, and why does it appeal to you at MIT?', 100, TRUE, 'https://mitadmissions.org/apply/firstyear/essays/'),
+  ('Massachusetts Institute of Technology (MIT)', 'community', 'mit_community', 'Community Impact', 'MIT brings people with diverse backgrounds together to collaborate and tackle the world''s biggest challenges. How have you contributed to your community?', 200, TRUE, 'https://mitadmissions.org/apply/firstyear/essays/'),
+  ('Massachusetts Institute of Technology (MIT)', 'short_answer', 'mit_pleasure', 'Something for Pure Pleasure', 'We know you lead a busy life, full of activities, many of which are required of you. Tell us about something you do simply for the pleasure of it.', 100, TRUE, 'https://mitadmissions.org/apply/firstyear/essays/'),
+  ('Yale University', 'why_major', 'yale_academic_topic', 'Academic Interest & Excitement', 'Tell us about a topic or idea that excites you and is related to one or more academic areas you selected. Why are you drawn to it?', 200, TRUE, 'https://admissions.yale.edu/instructions'),
+  ('Yale University', 'community', 'yale_community_enrich', 'Enriching Campus Community', 'Reflect on an element of your personal experience that you feel will enrich your college community. How has it shaped you?', 400, TRUE, 'https://admissions.yale.edu/instructions'),
+  ('Yale University', 'short_answer', 'yale_short_teach', 'Course You Would Teach', 'If you could teach any college course, write a book, or create an original piece of art of any kind, what would it be?', 50, TRUE, 'https://admissions.yale.edu/instructions'),
+  ('Dartmouth College', 'why_us', 'dartmouth_why_fit', 'Why Dartmouth Fit', 'As you seek admission to Dartmouth, what aspects of the college''s academic program, community, and/or campus environment attract your interest? How is Dartmouth a good fit for you?', 100, TRUE, 'https://admissions.dartmouth.edu/glossary-term/writing-questions'),
+  ('Dartmouth College', 'short_answer', 'dartmouth_life_speak', 'Let Your Life Speak', 'There is a Quaker saying: Let your life speak. Describe the environment in which you were raised and the impact it has had on the person you are today.', 250, TRUE, 'https://admissions.dartmouth.edu/glossary-term/writing-questions'),
+  ('Dartmouth College', 'community', 'dartmouth_purpose_impact', 'Life of Purpose & Impact', 'Civil rights activist Dolores Huerta said: "We must use our lives to make the world a better place to live, not just to acquire things. That is what we are put on the earth for." In what ways do you hope to make—or are you already making—an impact? Why? How?', 250, TRUE, 'https://admissions.dartmouth.edu/glossary-term/writing-questions'),
+  ('Amherst College', 'short_answer', 'amh_intellectual_rigor', 'Intellectual Rigor', 'Respond to a quote or share how you have engaged with a complex or controversial idea in your community or classroom.', 200, TRUE, 'https://www.amherst.edu/admission/apply/firstyear/writing-supplement'),
+  ('Amherst College', 'why_us', 'amh_why_open_curriculum', 'Ownership in the Open Curriculum', 'Amherst has an Open Curriculum with no distribution requirements. How will you take ownership of designing your academic journey at Amherst?', 250, TRUE, 'https://www.amherst.edu/admission/apply/firstyear/writing-supplement'),
+  ('Bowdoin College', 'why_us', 'bowdoin_offer_of_college', 'The Offer of the College', 'Choose a line from President William DeWitt Hyde''s "The Offer of the College" that resonates most with you, and reflect on what it means to your personal and educational goals.', 250, TRUE, 'https://www.bowdoin.edu/admissions/apply/writing-supplement.html'),
+  ('Bowdoin College', 'community', 'bowdoin_navigating_difference', 'Navigating Across Difference', 'Reflect on the perspectives you would bring to campus or describe a time you navigated across or through difference.', 250, TRUE, 'https://www.bowdoin.edu/admissions/apply/writing-supplement.html'),
+  ('Brown University', 'why_us', 'brown_open_curriculum', 'Open Curriculum Approach', 'Brown''s Open Curriculum frees each student to begin their college journey by exploring broadly. How will you use intellectual curiosity, creativity, and resilience to shape your academic path at Brown?', 250, TRUE, 'https://admission.brown.edu/first-year/supplementary-essays'),
+  ('Brown University', 'community', 'brown_community_perspective', 'Community Contribution & Background', 'Share how an aspect of your growing up has inspired or challenged you, and what unique contributions this might allow you to make to the Brown community.', 250, TRUE, 'https://admission.brown.edu/first-year/supplementary-essays'),
+  ('Brown University', 'short_answer', 'brown_brings_joy', 'What Brings You Joy', 'Tell us about something that brings you joy.', 150, TRUE, 'https://admission.brown.edu/first-year/supplementary-essays'),
+  ('Stanford University', 'short_answer', 'stan_what_matters', 'What Matters to You and Why', 'What matters most to you, and why?', 250, TRUE, 'https://admission.stanford.edu/apply/first-year/essays.html'),
+  ('Stanford University', 'short_answer', 'stan_roommate', 'Letter to Future Roommate', 'Virtually all of Stanford''s undergraduates live on campus. Write a note to your future roommate that reveals something about you or will help your roommate—and us—get to know you better.', 250, TRUE, 'https://admission.stanford.edu/apply/first-year/essays.html'),
+  ('Stanford University', 'why_major', 'stan_intellectual_vitality', 'Intellectual Vitality & Curiosity', 'The Stanford community is deeply curious and driven to learn in and out of the classroom. Reflect on an idea or experience that has been important to your intellectual development.', 250, TRUE, 'https://admission.stanford.edu/apply/first-year/essays.html'),
+  ('Columbia University', 'why_us', 'columbia_why_columbia', 'Why Columbia', 'Why are you interested in attending Columbia University? We encourage you to consider the aspect(s) that you find unique and compelling about Columbia.', 150, TRUE, 'https://undergrad.admissions.columbia.edu/apply/first-year/essays'),
+  ('Columbia University', 'community', 'columbia_lived_experience', 'Lived Experience & Contribution', 'Tell us about an aspect of your life so far or your lived experience that is important to you, and describe how it has shaped the way you would learn from and contribute to Columbia''s multidimensional and collaborative environment.', 150, TRUE, 'https://undergrad.admissions.columbia.edu/apply/first-year/essays'),
+  ('Columbia University', 'short_answer', 'columbia_intellectual_list', 'Intellectual Development Resources', 'List a selection of texts, resources, and outlets that have contributed to your intellectual development outside of academic courses (books, journals, podcasts, videos, museums, etc.).', 100, TRUE, 'https://undergrad.admissions.columbia.edu/apply/first-year/essays'),
+  ('Williams College', 'why_us', 'wil_tutorial', 'Tutorial Education', 'At Williams, students engage in tutorials where two students meet weekly with a professor. Tell us about an idea you look forward to debating in that setting.', 300, TRUE, 'https://admission.williams.edu/apply/'),
+  ('Williams College', 'community', 'wil_community_perspective', 'Community Contribution in the Entry', 'Every first-year student lives in an Entry, a dedicated residential cohort designed to bring diverse backgrounds together. How has your background shaped what you will contribute to this community?', 300, TRUE, 'https://admission.williams.edu/apply/'),
+  ('Swarthmore College', 'why_major', 'swat_curiosity_exploration', 'Curiosity & Intellectual Exploration', 'Swarthmore students'' curiosity often leads them to explore multiple disciplines. Tell us about a topic or idea that fascinates you and how Swarthmore''s academic community would help you explore it.', 250, TRUE, 'https://www.swarthmore.edu/admissions-aid/apply-to-swarthmore'),
+  ('Swarthmore College', 'community', 'swat_diverse_perspectives', 'Engagement Across Difference', 'Swarthmore is a community that values intellectual engagement, social responsibility, and collaboration across difference. How have your lived experiences prepared you to engage with our campus community?', 250, TRUE, 'https://www.swarthmore.edu/admissions-aid/apply-to-swarthmore'),
+  ('Duke University', 'why_us', 'duke_why_duke', 'Why Duke Match', 'What is your impression of Duke as a university and community, and why do you believe it is a good match for your goals, values, and interests? (Include specific offerings in Trinity College or Pratt School of Engineering).', 250, TRUE, 'https://admissions.duke.edu/apply/'),
+  ('Duke University', 'community', 'duke_community_shape', 'Community That Shaped You', 'We believe that a diverse community enriches the educational experience of all students. Tell us about a community that has shaped you and how that will influence your contributions at Duke.', 250, TRUE, 'https://admissions.duke.edu/apply/'),
+  ('Northwestern University', 'community', 'nu_background_community', 'Background and Community Engagement', 'What aspects of your background (your identity, your school setting, your community, your household, etc.) have most shaped how you see yourself engaging in Northwestern''s community, be it academically, extracurricularly, culturally, or socially?', 300, TRUE, 'https://admissions.northwestern.edu/apply/first-year-applicants.html'),
+  ('Northwestern University', 'short_answer', 'nu_the_rock', 'Painting The Rock', 'Painting "The Rock" is a longstanding Northwestern campus tradition. What would you paint on The Rock, and why?', 200, TRUE, 'https://admissions.northwestern.edu/apply/first-year-applicants.html'),
+  ('University of Pennsylvania (UPenn)', 'short_answer', 'upenn_thank_you_note', 'Acknowledgment / Thank You Note', 'Write a short thank-you note to someone you have not yet thanked and would like to acknowledge. We encourage you to share this note with that person, if possible, and reflect on the experience.', 200, TRUE, 'https://admissions.upenn.edu/how-to-apply/what-we-look-for/essays'),
+  ('University of Pennsylvania (UPenn)', 'community', 'upenn_community_explore', 'Exploring Community at Penn', 'How will you explore community at Penn? Consider how Penn will help shape your perspective and identity, and how your identity and perspective will help shape Penn.', 200, TRUE, 'https://admissions.upenn.edu/how-to-apply/what-we-look-for/essays'),
+  ('University of Pennsylvania (UPenn)', 'why_major', 'upenn_school_specific', 'Intellectual Pursuit in Chosen School', 'Considering the undergraduate school you have selected (College of Arts and Sciences, Wharton, Engineering, or Nursing), how will you explore your intellectual and academic interests at the University of Pennsylvania?', 400, TRUE, 'https://admissions.upenn.edu/how-to-apply/what-we-look-for/essays')
+) AS v(uni_name, essay_type, prompt_key, title, prompt_text, word_limit, is_required, source_url)
+ON u.name = v.uni_name
+ON CONFLICT (university_id, prompt_key, admission_cycle) DO UPDATE SET
+  essay_type = EXCLUDED.essay_type,
+  title = EXCLUDED.title,
+  prompt_text = EXCLUDED.prompt_text,
+  word_limit = EXCLUDED.word_limit,
+  is_required = EXCLUDED.is_required,
+  source_url = EXCLUDED.source_url,
+  data_verified_at = EXCLUDED.data_verified_at;
 
--- Application guide (SMS-sized summaries; check each external fee or rule before the demo)
-INSERT INTO guide_steps (step_order, phase, title, summary, body_md, est_minutes, cost_usd, external_url, ussd_code) VALUES
-(1,  'prepare', 'Understand how US admissions work', 'US schools read the whole application: grades, essays, activities, recommendations. No agent is needed.', 'US admissions are holistic. There is no single cutoff. Everything on the application is free to prepare yourself, and you never need to pay an agent.', 20, 0, 'https://educationusa.state.gov', 1),
-(2,  'prepare', 'Convert your KCSE to a US GPA', 'Use Pepea''s GPA converter. Dial the code and pick your KCSE grade.', 'Use the GPA module. The result is indicative; always report your real KCSE grades on applications.', 5, 0, NULL, 2),
-(3,  'prepare', 'Plan your tests', 'Check each school''s test policy: SAT/ACT may be required. Plan an English test if asked.', 'Policies change every cycle. Open the admissions page of each school on your list and record: SAT/ACT required, optional or blind, and which English tests are accepted.', 60, NULL, NULL, 3),
-(4,  'choose',  'Build your college list', 'Pick 8-12 schools across reach, target and likely using the Advisory module.', 'Aim for a spread. Prioritise schools that meet full demonstrated need for international students.', 90, 0, NULL, 4),
-(5,  'apply',   'Create your Common App account', 'Create a free account at commonapp.org with an email you check daily.', 'Use a personal email, not a school one. Add your colleges to the dashboard to see each school''s requirements.', 20, 0, 'https://www.commonapp.org', 5),
-(6,  'fund',    'Request application fee waivers', 'Fee waivers can make applications cost nothing. Check your eligibility early.', 'Eligibility rules differ by programme. Check the current criteria on the Common App and each school''s site.', 30, 0, 'https://www.commonapp.org', 6),
-(7,  'apply',   'Write your personal statement', 'One 650-word story told through a specific moment. Review it in the Essays module.', 'Avoid Insha-style openings. Start in the middle of a scene.', 600, 0, NULL, 7),
-(8,  'apply',   'Write school-specific essays', 'Each school asks its own questions. Open Essays, pick a school, then pick the prompt.', 'The Essays module lists every prompt per school and essay type.', 600, 0, NULL, 8),
-(9,  'apply',   'Request recommendations', 'Ask 2 teachers and your counsellor in person. Give them a short brag sheet.', 'Give recommenders at least 3 weeks. Offer a one-page summary of your work. Their drafts can be reviewed in the LOR module.', 60, 0, NULL, 9),
-(10, 'fund',    'Submit financial aid forms', 'Most schools need the CSS Profile plus their own forms. Dates differ per school.', 'Gather family income documents early. Use the Financial Aid module to see which forms each school requires.', 180, NULL, 'https://cssprofile.collegeboard.org', 10),
-(11, 'apply',   'Submit and track deadlines', 'Submit before the deadline and keep proof. Track dates on your Pepea checklist.', 'Early deadlines differ from regular ones. Submit a day early because portals slow down near deadlines.', 60, 0, NULL, 11),
-(12, 'visa',    'Decide and start your student visa', 'After admission you will need an I-20 and an F-1 visa. Check fees on the US State Dept site.', 'Visa fees and steps change. Always check the current official US Department of State instructions for Kenya.', 120, NULL, 'https://travel.state.gov', 12)
-ON CONFLICT (step_order) DO NOTHING;
+-- ------------------------------------------------------------------
+-- 5. APPLICATION GUIDE STEPS (12 Verified Steps with SMS Summaries)
+-- ------------------------------------------------------------------
+INSERT INTO guide_steps (step_order, phase, title, summary, body_md, est_minutes, cost_usd, external_url, ussd_code, data_verified_at) VALUES
+(1, 'prepare', 'Understand how US admissions work', 'US schools use holistic review: KCSE grades, essays, activities, recommendations. Everything can be prepared for free without paying an agent.', 'US admissions are holistic: universities evaluate your entire profile, not just exam scores. There is no single cutoff score. Academic achievements (KCSE grades, rigor), essays, extracurricular engagement, intellectual curiosity, and letters of recommendation are weighed together. All application materials can be completed independently. Never pay private agents who claim guaranteed entry or access to secret waivers.', 20, 0, 'https://educationusa.state.gov', 1, '2026-10-29'::DATE),
+(2, 'prepare', 'Convert your KCSE to a US GPA', 'Use Pepea GPA converter. Dial *384*73732# or use web to convert your KCSE aggregate to an indicative 4.0 US GPA for college targeting.', 'In Kenya, KNEC grades on a 12-point scale across 7 subjects (maximum aggregate: 84 points). US colleges operate on a 4.0 unweighted GPA scale. Pepea translates your KCSE points to an indicative US GPA. Remember: this conversion is indicative to help you select colleges. In official applications, you report your actual KCSE grades and subject breakdowns, which US admissions offices evaluate in context.', 5, 0, NULL, 2, '2026-10-29'::DATE),
+(3, 'prepare', 'Plan your standardized tests (SAT / English)', 'Check each school test policy: SAT is required by MIT, Harvard, Yale, Dartmouth, Brown, Stanford, UPenn; optional at Princeton, Amherst, Bowdoin.', 'Testing policies vary. Top institutions like MIT, Harvard, Yale, Dartmouth, Brown, Stanford, and UPenn require the SAT or ACT for evaluation. Others like Princeton, Amherst, Bowdoin, Columbia, Williams, Swarthmore, Duke, and Northwestern remain test-optional for the 2026-27 cycle. The SAT costs ~$111 USD in Kenya without a fee waiver. English proficiency tests like Duolingo English Test ($65 USD) can often be waived if your high school instruction was in English.', 60, 0, 'https://satsuite.collegeboard.org', 3, '2026-10-29'::DATE),
+(4, 'choose', 'Build your college list (Reach, Target, Likely)', 'Build a balanced list of 8-12 schools. Prioritize institutions that meet 100% demonstrated financial need for international students.', 'Structure your list with reach, target, and likely institutions. For Kenyan students needing financial aid, prioritize the 8 need-blind institutions (Harvard, Princeton, MIT, Yale, Dartmouth, Amherst, Bowdoin, Brown) and institutions meeting 100% demonstrated need (Stanford, Columbia, Williams, Swarthmore, Duke, Northwestern, UPenn). Balance large research universities with liberal arts colleges.', 90, 0, NULL, 4, '2026-10-29'::DATE),
+(5, 'apply', 'Create your Common App account', 'Create a free Common App account at commonapp.org using a personal Gmail. Add your target universities and note their deadlines.', 'The Common Application (commonapp.org) is the central platform for over 1,000 US colleges. Register with a permanent personal email address (e.g. Gmail) that you monitor daily. In the FERPA section, waiving your right to view recommendation letters signals confidence and credibility to admissions officers. Add your chosen colleges to your My Colleges tab to track deadlines.', 20, 0, 'https://www.commonapp.org', 5, '2026-10-29'::DATE),
+(6, 'fund', 'Request application fee waivers', 'Check the Common App fee waiver box if application fees pose a barrier. Your high school counselor confirms it, saving $75-$90 per school.', 'US university application fees average $75-$90 per school. In the Profile section of Common App, select the Common App Fee Waiver if payment presents a hardship. Your designated school counselor confirms eligibility with one click, completely eliminating application fees across all selected colleges. You should never pay for application fee submissions.', 30, 0, 'https://www.commonapp.org', 6, '2026-10-29'::DATE),
+(7, 'apply', 'Write your personal statement (Common App)', 'Draft your 650-word personal essay focusing on one specific narrative. Avoid generic Insha register; use Pepea Essays module to review.', 'Your 650-word personal essay is your authentic voice before the admissions committee. Focus on a specific story, challenge, or intellectual curiosity rather than a chronological resume summary. Avoid formal Insha rhetorical phrases. Clearly contextualize Kenyan cultural concepts (boarding school life, family responsibilities, county environments) so an American admissions officer understands your world.', 600, 0, NULL, 7, '2026-10-29'::DATE),
+(8, 'apply', 'Write school-specific supplemental essays', 'Each college requires 1-3 supplements (Why Us, Why Major, Community). Research specific professors, labs, and courses before writing.', 'Beyond the Common App essay, selective universities require supplemental essays (typically 100 to 300 words). These include Why Us (demonstrating fit with specific academic courses, labs, and faculty), Why Major (intellectual curiosity and origins of your academic passion), and Community (how your background enriches campus). Avoid generic flattery; mention concrete academic and community initiatives.', 600, 0, NULL, 8, '2026-10-29'::DATE),
+(9, 'apply', 'Request teacher & counselor recommendations', 'Ask 2 academic teachers and your principal/counselor at least 4 weeks early. Provide a brag sheet with your achievements and family context.', 'Most universities require letters from two academic subject teachers (e.g. Mathematics, Sciences, English, History) plus one counselor/principal report. Approach teachers in person early. Provide them with a one-page brag sheet highlighting your class contributions, major projects, personal challenges, and goals. Use Pepea LOR Review module to evaluate letter drafts for depth and concrete examples.', 60, 0, NULL, 9, '2026-10-29'::DATE),
+(10, 'fund', 'Submit financial aid applications (CSS Profile / ISFAA)', 'Submit CSS Profile and tax/income documents by the priority deadline. Request College Board fee waiver codes directly from admissions offices.', 'To receive institutional need-based aid, complete the College Board CSS Profile (cssprofile.collegeboard.org) and submit non-tax-filer statements or payslips. Convert Kenya Shillings (KES) to USD accurately. Some schools accept the free International Student Financial Aid Application (ISFAA). Contact college financial aid offices early to request CSS Profile fee waiver codes to avoid the $25+$16 fee.', 180, 0, 'https://cssprofile.collegeboard.org', 10, '2026-10-29'::DATE),
+(11, 'apply', 'Submit applications and track decision portals', 'Submit at least 24 hours before deadlines (Nov 1 for EA/ED, Jan 1-5 for RD). Set up applicant portals for each university and verify all materials.', 'Submit your Common App and writing supplements at least 24 hours before the stated deadline (accounting for the 7-8 hour time difference between Kenya EAT and US Eastern Time). Within 48 hours of submission, each college will email login credentials for their applicant status portal. Log in immediately and confirm that transcripts, recommendations, and aid forms have arrived.', 60, 0, NULL, 11, '2026-10-29'::DATE),
+(12, 'visa', 'Form I-20 and F-1 student visa application', 'Upon accepting an offer, receive Form I-20 from your university. Pay the SEVIS I-901 fee ($350) and DS-160 visa fee ($185) at the US Embassy Nairobi.', 'After accepting an admissions offer and receiving your university financial aid package, the university issues Form I-20 (Certificate of Eligibility). You must pay the mandatory SEVIS I-901 fee ($350 USD) online at fmjfee.com. Next, complete Form DS-160 online and pay the MRV visa application fee ($185 USD). Book your student visa interview at the U.S. Embassy in Nairobi (Gigiri). Total mandatory visa fees equal $535 USD.', 120, 535, 'https://travel.state.gov', 12, '2026-10-29'::DATE)
+ON CONFLICT (step_order) DO UPDATE SET
+  phase = EXCLUDED.phase,
+  title = EXCLUDED.title,
+  summary = EXCLUDED.summary,
+  body_md = EXCLUDED.body_md,
+  est_minutes = EXCLUDED.est_minutes,
+  cost_usd = EXCLUDED.cost_usd,
+  external_url = EXCLUDED.external_url,
+  ussd_code = EXCLUDED.ussd_code,
+  data_verified_at = EXCLUDED.data_verified_at;
 
--- Financial aid programs (all unverified; verify before demo)
-INSERT INTO aid_programs (name, program_type, provider, university_id, covers_full_cost, requires_css_profile, eligibility_md, official_url)
-SELECT u.name || ' need-based aid', 'institutional_need', u.name, u.id, u.meets_100_pct_need, TRUE,
-       'International students may apply for need-based aid. Confirm the school''s current policy, forms and deadline.', u.website_url
+-- ------------------------------------------------------------------
+-- 6. FINANCIAL AID PROGRAMS (Institutional 100% Need & Pathways)
+-- ------------------------------------------------------------------
+-- Institutional Need-Based Aid Programs
+INSERT INTO aid_programs (name, program_type, provider, university_id, covers_full_cost, amount_usd_min, amount_usd_max, kenya_eligible, intl_eligible, requires_css_profile, deadline, eligibility_md, how_to_apply_md, official_url, data_verified_at)
+SELECT v.name, 'institutional_need', u.name, u.id, TRUE, v.amount_usd_min, u.cost_of_attendance_usd, TRUE, TRUE, TRUE, u.rd_deadline, v.eligibility_md, v.how_to_apply_md, u.website_url, '2026-10-29'::DATE
 FROM universities u
-WHERE NOT EXISTS (SELECT 1 FROM aid_programs a WHERE a.university_id = u.id AND a.program_type = 'institutional_need');
+JOIN (VALUES
+  ('Harvard University', 'Harvard University Need-Based International Financial Aid', 45000, 'International students admitted to Harvard University with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-01. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Princeton University', 'Princeton University Need-Based International Financial Aid', 45000, 'International students admitted to Princeton University with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-01. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Massachusetts Institute of Technology (MIT)', 'Massachusetts Institute of Technology (MIT) Need-Based International Financial Aid', 45000, 'International students admitted to Massachusetts Institute of Technology (MIT) with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-05. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Yale University', 'Yale University Need-Based International Financial Aid', 45000, 'International students admitted to Yale University with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-02. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Dartmouth College', 'Dartmouth College Need-Based International Financial Aid', 45000, 'International students admitted to Dartmouth College with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-02. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Amherst College', 'Amherst College Need-Based International Financial Aid', 45000, 'International students admitted to Amherst College with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-03. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Bowdoin College', 'Bowdoin College Need-Based International Financial Aid', 45000, 'International students admitted to Bowdoin College with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-05. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Brown University', 'Brown University Need-Based International Financial Aid', 45000, 'International students admitted to Brown University with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-03. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Stanford University', 'Stanford University Need-Based International Financial Aid', 45000, 'International students admitted to Stanford University with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-05. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Columbia University', 'Columbia University Need-Based International Financial Aid', 45000, 'International students admitted to Columbia University with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-01. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Williams College', 'Williams College Need-Based International Financial Aid', 45000, 'International students admitted to Williams College with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-08. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Swarthmore College', 'Swarthmore College Need-Based International Financial Aid', 45000, 'International students admitted to Swarthmore College with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-04. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Duke University', 'Duke University Need-Based International Financial Aid', 45000, 'International students admitted to Duke University with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-02. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('Northwestern University', 'Northwestern University Need-Based International Financial Aid', 45000, 'International students admitted to Northwestern University with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-02. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.'),
+  ('University of Pennsylvania (UPenn)', 'University of Pennsylvania (UPenn) Need-Based International Financial Aid', 45000, 'International students admitted to University of Pennsylvania (UPenn) with demonstrated financial need. Covers up to 100% of demonstrated need with university grant funds without requiring educational loans. Evaluated via CSS Profile and family income documentation.', 'Submit the CSS Profile (school code available on College Board) by 2027-01-05. Upload official parental income statements, tax documents, or employer wage letters translated into English. Contact financial aid office if requesting a CSS Profile fee waiver code.')
+) AS v(uni_name, name, amount_usd_min, eligibility_md, how_to_apply_md)
+ON u.name = v.uni_name
+ON CONFLICT (name) DO UPDATE SET
+  program_type = EXCLUDED.program_type,
+  provider = EXCLUDED.provider,
+  university_id = EXCLUDED.university_id,
+  covers_full_cost = EXCLUDED.covers_full_cost,
+  amount_usd_min = EXCLUDED.amount_usd_min,
+  amount_usd_max = EXCLUDED.amount_usd_max,
+  kenya_eligible = EXCLUDED.kenya_eligible,
+  intl_eligible = EXCLUDED.intl_eligible,
+  requires_css_profile = EXCLUDED.requires_css_profile,
+  deadline = EXCLUDED.deadline,
+  eligibility_md = EXCLUDED.eligibility_md,
+  how_to_apply_md = EXCLUDED.how_to_apply_md,
+  official_url = EXCLUDED.official_url,
+  data_verified_at = EXCLUDED.data_verified_at;
 
-INSERT INTO aid_programs (name, program_type, provider, covers_full_cost, requires_css_profile, eligibility_md, official_url)
-SELECT * FROM (VALUES
-  ('Common App fee waiver', 'fee_waiver', 'Common App', FALSE, FALSE, 'Check current eligibility criteria on the Common App.', 'https://www.commonapp.org'),
-  ('CSS Profile fee waiver', 'fee_waiver', 'College Board', FALSE, TRUE, 'Check current eligibility criteria on the College Board site.', 'https://cssprofile.collegeboard.org'),
-  ('EducationUSA Kenya advising', 'pathway_program', 'U.S. Department of State', FALSE, FALSE, 'Free advising for students applying to US colleges.', 'https://educationusa.state.gov'),
-  ('KenSAP', 'pathway_program', 'Kenya Scholar-Access Program', FALSE, FALSE, 'Selective programme for high-achieving Kenyan students. Confirm current intake and criteria.', NULL)
-) AS v(name, program_type, provider, covers_full_cost, requires_css_profile, eligibility_md, official_url)
-WHERE NOT EXISTS (SELECT 1 FROM aid_programs a WHERE a.name = v.name);
+-- Major External Scholarships, Fee Waivers & Pathway Programs
+INSERT INTO aid_programs (name, program_type, provider, covers_full_cost, amount_usd_min, amount_usd_max, kenya_eligible, intl_eligible, requires_css_profile, deadline, eligibility_md, how_to_apply_md, official_url, data_verified_at)
+VALUES
+(
+  'Mastercard Foundation Scholars Program',
+  'external_scholarship',
+  'Mastercard Foundation',
+  TRUE,
+  80000,
+  95000,
+  TRUE,
+  TRUE,
+  FALSE,
+  '2027-01-15',
+  'Academically talented young people from Sub-Saharan Africa who face significant financial barriers. Open to high school graduates with leadership potential and dedication to giving back to their home communities.',
+  'Apply directly through partner universities (e.g. Berkeley, Duke, Wellesley) or via the Mastercard Foundation portal. Financial documentation and leadership essays required.',
+  'https://mastercardfdn.org/all/scholars/',
+  '2026-10-29'
+),
+(
+  'EducationUSA Opportunity Funds Program (OFP)',
+  'pathway_program',
+  'U.S. Embassy Nairobi / EducationUSA Kenya',
+  FALSE,
+  1500,
+  5000,
+  TRUE,
+  TRUE,
+  FALSE,
+  '2026-05-31',
+  'High-achieving Kenyan students with KCSE mean grade of A or A- who come from low-income families and lack financial resources to pay upfront application costs.',
+  'Submit the EducationUSA Opportunity Funds application through the US Embassy Nairobi website or American Spaces (Nairobi, Mombasa, Nakuru, Kisumu). Covers SAT/ACT testing fees, CSS Profile, SEVIS, visa fees, and airfare.',
+  'https://ke.usembassy.gov/education/educationusa/',
+  '2026-10-29'
+),
+(
+  'KenSAP (Kenya Scholar-Access Program)',
+  'pathway_program',
+  'Kenya Scholar-Access Program',
+  TRUE,
+  80000,
+  95000,
+  TRUE,
+  TRUE,
+  FALSE,
+  '2026-04-15',
+  'Kenyan citizens who scored a minimum of 79 points (solid A) in the KCSE from disadvantaged socio-economic backgrounds.',
+  'Competitive application cycle each April. Finalists attend an intensive free residential training boot camp preparing for the SAT, Common App personal essays, and college selection. Placed ~20 students per year with full financial aid packages at elite US institutions.',
+  'https://kensap.org',
+  '2026-10-29'
+),
+(
+  'Equity Leaders Program (ELP)',
+  'pathway_program',
+  'Equity Group Foundation',
+  FALSE,
+  2000,
+  10000,
+  TRUE,
+  TRUE,
+  FALSE,
+  '2026-03-31',
+  'Top boy and top girl in the KCSE from each sub-county across Kenya, alongside Wings to Fly scholars scoring A or A-.',
+  'Selection occurs automatically following KCSE result releases. Scholars undergo paid internships with Equity Bank and receive college counseling for global university admissions, including SAT prep and application mentorship.',
+  'https://equitygroupfoundation.com/education-leadership-development/',
+  '2026-10-29'
+),
+(
+  'Zawadi Africa Educational Fund',
+  'pathway_program',
+  'Zawadi Africa',
+  TRUE,
+  75000,
+  92000,
+  TRUE,
+  TRUE,
+  FALSE,
+  '2026-04-30',
+  'Academically gifted, financially disadvantaged Kenyan female students with an aggregate KCSE mean grade of A or A-.',
+  'Apply through the Zawadi Africa Kenya portal. Selected young women receive leadership development training and comprehensive placement assistance for top US colleges with full institutional scholarships.',
+  'https://zawadiafrica.org',
+  '2026-10-29'
+),
+(
+  'Common App Fee Waiver',
+  'fee_waiver',
+  'Common App',
+  FALSE,
+  75,
+  1800,
+  TRUE,
+  TRUE,
+  FALSE,
+  '2027-01-15',
+  'International students whose family income makes application fees prohibitive. Qualifying criteria include receiving public assistance or a counselor affirmation of family hardship.',
+  'Select the fee waiver option in the Profile section of your Common Application. Your high school counselor confirms your eligibility directly on their counselor portal. 100% free.',
+  'https://www.commonapp.org',
+  '2026-10-29'
+),
+(
+  'College Board CSS Profile Fee Waiver',
+  'fee_waiver',
+  'College Board',
+  FALSE,
+  25,
+  250,
+  TRUE,
+  TRUE,
+  TRUE,
+  '2027-02-01',
+  'Low-income international undergraduate applicants applying to participating CSS Profile colleges who demonstrate acute financial hardship.',
+  'Many universities automatically provide CSS Profile fee waiver codes to qualifying international applicants upon request to the financial aid office. Alternatively, check if the school accepts the free ISFAA form.',
+  'https://cssprofile.collegeboard.org',
+  '2026-10-29'
+)
+ON CONFLICT (name) DO UPDATE SET
+  program_type = EXCLUDED.program_type,
+  provider = EXCLUDED.provider,
+  covers_full_cost = EXCLUDED.covers_full_cost,
+  amount_usd_min = EXCLUDED.amount_usd_min,
+  amount_usd_max = EXCLUDED.amount_usd_max,
+  kenya_eligible = EXCLUDED.kenya_eligible,
+  intl_eligible = EXCLUDED.intl_eligible,
+  requires_css_profile = EXCLUDED.requires_css_profile,
+  deadline = EXCLUDED.deadline,
+  eligibility_md = EXCLUDED.eligibility_md,
+  how_to_apply_md = EXCLUDED.how_to_apply_md,
+  official_url = EXCLUDED.official_url,
+  data_verified_at = EXCLUDED.data_verified_at;

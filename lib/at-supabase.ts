@@ -1,19 +1,37 @@
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// 1. Supabase Initialization (Safe initialization)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://demo.supabase.co';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'demo-key';
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-});
+// 1. Supabase Initialization
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!isDemoMode) {
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error(
+      '[Supabase] Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in live mode. ' +
+      'Set these in .env.local or enable NEXT_PUBLIC_DEMO_MODE=true for local presentation demo.'
+    );
+  }
+}
+
+export const supabaseAdmin = createClient(
+  supabaseUrl || 'https://demo.supabase.co',
+  supabaseKey || 'demo-key',
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  }
+);
 
 // 2. Google Gemini Initialization
 const geminiApiKey = process.env.GEMINI_API_KEY || '';
+if (!isDemoMode && !geminiApiKey) {
+  console.warn('[Gemini] GEMINI_API_KEY is not set. Gemini calls will fail in live mode.');
+}
 export const geminiAI = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null;
 
 // 3. Africa's Talking Client Initialization
@@ -35,10 +53,12 @@ try {
     atVoiceClient = africastalkingInstance.VOICE;
   }
 } catch (err) {
-  console.warn('[Africa\'s Talking] Running in simulated mode:', (err as Error).message);
+  if (!isDemoMode) {
+    console.error('[Africa\'s Talking] Failed to initialize in live mode:', (err as Error).message);
+  }
 }
 
-// Fallback Mock Implementations to ensure 100% demo uptime
+// SMS sender
 export const atSMS = {
   send: async (options: { to: string[]; message: string; from?: string }) => {
     if (atSMSClient) {
@@ -48,35 +68,46 @@ export const atSMS = {
         from: options.from || process.env.AT_SENDER_ID || undefined,
       });
     }
-    console.log('[MOCK AT SMS SENT]:', options);
-    return {
-      SMSMessageData: {
-        Message: 'Sent to 1/1 Total Cost: KES 0.8000',
-        Recipients: options.to.map((num) => ({
-          statusCode: 101,
-          number: num,
-          status: 'Success',
-          cost: 'KES 0.8000',
-          messageId: `MOCK_MSG_${Date.now()}`,
-        })),
-      },
-    };
+
+    if (isDemoMode) {
+      console.log('[MOCK AT SMS SENT]:', options);
+      return {
+        SMSMessageData: {
+          Message: 'Sent to 1/1 Total Cost: KES 0.8000',
+          Recipients: options.to.map((num) => ({
+            statusCode: 101,
+            number: num,
+            status: 'Success',
+            cost: 'KES 0.8000',
+            messageId: `MOCK_MSG_${Date.now()}`,
+          })),
+        },
+      };
+    }
+
+    throw new Error('[Africa\'s Talking] SMS service not initialized. Missing AT_API_KEY or failed setup in live mode.');
   },
 };
 
+// Outbound voice caller
 export const atVoice = {
   call: async (options: { callFrom: string; callTo: string[] }) => {
     if (atVoiceClient) {
       return atVoiceClient.call(options);
     }
-    console.log('[MOCK AT VOICE OUTBOUND CALL]:', options);
-    return {
-      entries: options.callTo.map((num) => ({
-        phoneNumber: num,
-        status: 'Queued',
-        sessionId: `AT_VOICE_SESSION_${Date.now()}`,
-      })),
-      errorMessage: 'None',
-    };
+
+    if (isDemoMode) {
+      console.log('[MOCK AT VOICE OUTBOUND CALL]:', options);
+      return {
+        entries: options.callTo.map((num) => ({
+          phoneNumber: num,
+          status: 'Queued',
+          sessionId: `AT_VOICE_SESSION_${Date.now()}`,
+        })),
+        errorMessage: 'None',
+      };
+    }
+
+    throw new Error('[Africa\'s Talking] Voice service not initialized. Missing AT_API_KEY or failed setup in live mode.');
   },
 };

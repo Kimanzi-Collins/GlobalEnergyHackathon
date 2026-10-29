@@ -128,7 +128,7 @@ VALUES
       "prompt_text": "At Williams, students engage in tutorials where two students meet weekly with a professor. Tell us about an idea you look forward to debating in that setting."
     }
   ]'::jsonb
-);
+) ON CONFLICT (name) DO NOTHING;
 
 -- Official Commission for University Education (CUE) Flagged Rogue Agencies & Fake Degree Mills
 INSERT INTO flagged_agencies (entity_name, entity_type, location_city, warning_reason) VALUES
@@ -139,4 +139,4 @@ INSERT INTO flagged_agencies (entity_name, entity_type, location_city, warning_r
 ('Askoni Kenya Study Abroad', 'illegal_agency', 'Nairobi - Eastleigh', 'Demanding money upfront for scholarship matching and falsified transcripts.'),
 ('Beacon Education Agency', 'illegal_agency', 'Nairobi - Safina Plaza', 'Flagged in January 2026 Ministry of Education crackdown on unregistered student recruitment hubs.'),
 ('American University of London', 'unaccredited_university', 'Online / Unaccredited', 'Unaccredited degree mill not recognized by CUE or US Department of Education.'),
-('Atlantic International University (AIU)', 'unaccredited_university', 'Online / Hawaii', 'Disclaimed by UNESCO and Kenyan CUE; degrees ineligible for employment recognition in Kenya.');
+('Atlantic International University (AIU)', 'unaccredited_university', 'Online / Hawaii', 'Disclaimed by UNESCO and Kenyan CUE; degrees ineligible for employment recognition in Kenya.') ON CONFLICT (entity_name) DO NOTHING;

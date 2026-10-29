@@ -131,6 +131,7 @@ export interface GuideStep {
   costUsd?: number | null;
   externalUrl?: string;
   ussdCode?: number;
+  dataVerifiedAt?: string | null;
 }
 export interface GuideResponse {
   steps: Array<GuideStep & { status: ProgressStatus }>;

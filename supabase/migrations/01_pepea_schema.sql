@@ -99,7 +99,8 @@ CREATE TABLE IF NOT EXISTS flagged_agencies (
 CREATE INDEX IF NOT EXISTS idx_students_phone ON students(phone_number);
 CREATE INDEX IF NOT EXISTS idx_tasks_student ON application_tasks(student_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_student ON essay_reviews(student_id);
-CREATE INDEX IF NOT EXISTS idx_flagged_name ON flagged_agencies(entity_name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_universities_name ON universities(name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_flagged_name ON flagged_agencies(entity_name);
 
 -- Realtime subscriptions
 ALTER PUBLICATION supabase_realtime ADD TABLE essay_reviews;
