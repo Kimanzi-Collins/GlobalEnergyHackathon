@@ -1,5 +1,6 @@
 import React from 'react';
 import { Zap, Heart, Terminal, ShieldCheck, Github } from 'lucide-react';
+import { USSD_SERVICE_CODE } from '@/lib/constants';
 
 export default function Footer() {
   return (
@@ -31,11 +32,11 @@ export default function Footer() {
             <ul className="space-y-2 text-[11px]">
               <li className="flex items-center gap-1.5 text-parchment/70">
                 <span className="w-1.5 h-1.5 rounded-full bg-safari-400"></span>
-                USSD Gateway (*384*PEPEA#)
+                USSD Gateway ({USSD_SERVICE_CODE})
               </li>
               <li className="flex items-center gap-1.5 text-parchment/70">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
-                Voice API XML & Record Webhooks
+                Voice API Mock Interview
               </li>
               <li className="flex items-center gap-1.5 text-parchment/70">
                 <span className="w-1.5 h-1.5 rounded-full bg-savannah-400"></span>

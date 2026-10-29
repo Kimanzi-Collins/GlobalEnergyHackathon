@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { parseATForm } from '@/lib/parse-at-webhook';
 import { atSMS } from '@/lib/at-supabase';
+import { USSD_SERVICE_CODE } from '@/lib/constants';
 
 export async function POST(req: Request) {
   try {
@@ -10,7 +11,7 @@ export async function POST(req: Request) {
     // Inbound SMS query processing
     if (text) {
       const query = text.trim().toUpperCase();
-      let replyMessage = `Karibu Pepea! Dial *384*PEPEA# on your phone for free abroad admissions tracking, KCSE to GPA conversion, and CUE scam check.`;
+      let replyMessage = `Karibu Pepea! Dial ${USSD_SERVICE_CODE} on your phone for free abroad admissions tracking, KCSE to GPA conversion, and CUE scam check.`;
 
       if (query.includes('MIT')) {
         replyMessage = `PEPEA MIT GUIDE: Early Action Nov 1, RD Jan 5. 100% Need-blind for international students. Zero Common App fee with waiver. Use Pepea AO Studio to polish your 200w supplement!`;

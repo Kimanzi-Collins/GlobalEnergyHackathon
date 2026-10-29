@@ -1,6 +1,7 @@
 import { parseATForm, ussdResponse } from '@/lib/parse-at-webhook';
 import { supabaseAdmin, atSMS, atVoice } from '@/lib/at-supabase';
 import { MOCK_FLAGGED_AGENCIES } from '@/lib/mock-data';
+import { USSD_SERVICE_CODE, USSD_SERVICE_CODE_BASE } from '@/lib/constants';
 
 export async function POST(req: Request) {
   try {
@@ -15,9 +16,8 @@ export async function POST(req: Request) {
         `Karibu Pepea (Abroad App Navigator)\n` +
         `1. KCSE to US GPA & 100% Aid Match\n` +
         `2. Deadlines & Checklist (Nov 1 EA!)\n` +
-        `3. Voice Call Teacher for Rec Letter\n` +
-        `4. Live 60s Voice Mock Interview\n` +
-        `5. Verify Agency (CUE 2026 Blacklist)`
+        `3. Live 60s Voice Mock Interview\n` +
+        `4. Verify Agency (CUE 2026 Blacklist)`
       );
     }
 
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
         // Send detailed roadmap via AT SMS
         await atSMS.send({
           to: [phoneNumber],
-          message: `PEPEA ROADMAP: KCSE ${picked.grade} converts to ~${picked.gpa} US GPA! Top 100%-Aid matches: ${picked.schools}. 1) Create account at commonapp.org 2) Request Common App & CSS Profile Fee Waivers (100% Free) 3) Dial *384*PEPEA# to generate teacher rec.`,
+          message: `PEPEA ROADMAP: KCSE ${picked.grade} converts to ~${picked.gpa} US GPA! Top 100%-Aid matches: ${picked.schools}. 1) Create account at commonapp.org 2) Request Common App & CSS Profile Fee Waivers (100% Free) 3) Dial ${USSD_SERVICE_CODE} any time for your deadline checklist.`,
         });
 
         return ussdResponse(
@@ -85,44 +85,14 @@ export async function POST(req: Request) {
         `[ ] Personal Statement (650w)\n` +
         `[ ] MIT/Amherst Supplements\n` +
         `[ ] CSS Profile Fee Waiver\n` +
-        `[ ] Teacher Rec 1 & 2 (Pending)\n` +
-        `Dial *384*PEPEA*3# to call your teacher now!`,
+        `[ ] Teacher Recs 1 & 2 (ask in person this week)\n` +
+        `Dial ${USSD_SERVICE_CODE_BASE}*3# for a mock interview.`,
         true
       );
     }
 
-    // BRANCH 3: VOICE API MWALIMU RECOMMENDER
+    // BRANCH 3: 60-SECOND LIVE VOICE MOCK INTERVIEW
     if (steps[0] === '3') {
-      if (steps.length === 1) {
-        return ussdResponse(
-          `Enter your High School Teacher's phone number (e.g. 0722123456) to trigger a 30s Voice Recommendation call:`
-        );
-      }
-      if (steps.length === 2) {
-        const inputNum = steps[1].trim();
-        const teacherPhone = inputNum.startsWith('+') ? inputNum : `+254${inputNum.replace(/^0/, '')}`;
-        const virtualNum = process.env.AT_VIRTUAL_NUMBER || '+254711082000';
-
-        await atVoice.call({
-          callFrom: virtualNum,
-          callTo: [teacherPhone],
-        });
-
-        await atSMS.send({
-          to: [phoneNumber],
-          message: `PEPEA ALERT: We are placing an outbound voice call to your teacher (${teacherPhone}). Once they answer our 2 voice questions, your US recommendation letter will appear on your web dashboard.`,
-        });
-
-        return ussdResponse(
-          `Outbound call initiated to Mwalimu at ${teacherPhone}!\n` +
-          `They will answer 2 voice prompts. Gemini will format their spoken answers into a verified US recommendation letter.`,
-          true
-        );
-      }
-    }
-
-    // BRANCH 4: 60-SECOND LIVE VOICE MOCK INTERVIEW
-    if (steps[0] === '4') {
       const virtualNum = process.env.AT_VIRTUAL_NUMBER || '+254711082000';
       await atVoice.call({
         callFrom: virtualNum,
@@ -136,8 +106,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // BRANCH 5: CUE STUDY-ABROAD SCAM CHECKER
-    if (steps[0] === '5') {
+    // BRANCH 4: CUE STUDY-ABROAD SCAM CHECKER
+    if (steps[0] === '4') {
       if (steps.length === 1) {
         return ussdResponse(
           `Enter the name of the Study-Abroad Agency or College to verify against the CUE Jan 2026 Blacklist:`
@@ -165,7 +135,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return ussdResponse(`Invalid selection. Please redial *384*PEPEA#`, true);
+    return ussdResponse(`Invalid selection. Please redial ${USSD_SERVICE_CODE}`, true);
   } catch (error: any) {
     console.error('[USSD Route Error]', error);
     return ussdResponse(`Pepea service temporarily busy. Please try again.`, true);

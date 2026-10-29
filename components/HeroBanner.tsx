@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ArrowRight, Sparkles, Phone, ShieldCheck, CheckCircle2, ChevronRight, Globe2 } from 'lucide-react';
+import { USSD_SERVICE_CODE } from '@/lib/constants';
 
 export default function HeroBanner() {
   return (
@@ -28,7 +29,7 @@ export default function HeroBanner() {
           <p className="mt-8 text-lg sm:text-2xl text-parchment/70 font-normal leading-relaxed max-w-3xl">
             In 72 hours, November 1 Early Action deadlines close for MIT, Harvard, and Stanford.
             Pepea gives every Kenyan student a ruthlessly honest Gemini Admissions Officer, 
-            zero-data USSD tracking, and an automated Voice engine that turns teacher phone calls into verified US recommendation letters.
+            zero-data USSD tracking, and a step-by-step guide from KCSE results to financial aid.
           </p>
         </div>
 
@@ -48,15 +49,15 @@ export default function HeroBanner() {
             className="px-7 py-4 rounded-xl bg-canvas-surface hover:bg-canvas-elevated text-parchment font-semibold text-sm tracking-wide border subtle-border transition-all flex items-center gap-2"
           >
             <Phone className="w-4 h-4 text-safari-400" />
-            Dial *384*PEPEA# Simulator
+            Dial {USSD_SERVICE_CODE} Simulator
           </a>
 
           <a
-            href="#voice-studio"
+            href="#mock-interview"
             className="px-7 py-4 rounded-xl bg-canvas-surface hover:bg-canvas-elevated text-parchment font-semibold text-sm tracking-wide border subtle-border transition-all flex items-center gap-2"
           >
             <Globe2 className="w-4 h-4 text-blue-400" />
-            Voice Teacher Recommender
+            Voice Mock Interview
           </a>
         </div>
 

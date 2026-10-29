@@ -23,7 +23,7 @@ export default function Home() {
       {/* 4. Africa's Talking USSD Interactive Phone Simulator */}
       <USSDPhoneSimulator />
 
-      {/* 5. Africa's Talking Voice Studio (Mwalimu Rec & Mock Interview) */}
+      {/* 5. Africa's Talking Voice Studio (Mock Interview) */}
       <VoiceStudio />
 
       {/* 6. KCSE to US 4.0 GPA & 100% Aid College Matcher */}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Sparkles, PhoneCall, ShieldAlert, Award, ArrowUpRight, Zap } from 'lucide-react';
+import { USSD_SERVICE_CODE } from '@/lib/constants';
 
 export default function Navbar() {
   const [timeLeft, setTimeLeft] = useState({ hours: 71, minutes: 48, seconds: 12 });
@@ -69,11 +70,11 @@ export default function Navbar() {
           </a>
           <a href="#ussd-simulator" className="hover:text-savannah-400 transition-colors flex items-center gap-1.5">
             <PhoneCall className="w-3.5 h-3.5 text-safari-400" />
-            USSD Dialpad (*384#)
+            USSD Dialpad ({USSD_SERVICE_CODE})
           </a>
-          <a href="#voice-studio" className="hover:text-savannah-400 transition-colors flex items-center gap-1.5">
+          <a href="#mock-interview" className="hover:text-savannah-400 transition-colors flex items-center gap-1.5">
             <Award className="w-3.5 h-3.5 text-blue-400" />
-            Voice Mwalimu Rec
+            Mock Interview
           </a>
           <a href="#cue-blacklist" className="hover:text-savannah-400 transition-colors flex items-center gap-1.5">
             <ShieldAlert className="w-3.5 h-3.5 text-crimson-400" />

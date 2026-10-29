@@ -2,17 +2,16 @@
 
 import React, { useState } from 'react';
 import { Phone, Delete, RotateCcw, MessageSquare, Check, ShieldCheck, Zap } from 'lucide-react';
+import { USSD_SERVICE_CODE } from '@/lib/constants';
 
 export default function USSDPhoneSimulator() {
   const [phoneNumber, setPhoneNumber] = useState('+254712345678');
   const [sessionText, setSessionText] = useState('');
-  const [currentInput, setCurrentInput] = useState('*384*PEPEA#');
-  const [screenText, setScreenText] = useState('Dial *384*PEPEA# to start zero-data navigation.');
+  const [currentInput, setCurrentInput] = useState(USSD_SERVICE_CODE);
+  const [screenText, setScreenText] = useState(`Dial ${USSD_SERVICE_CODE} to start zero-data navigation.`);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [incomingSMS, setIncomingSMS] = useState<string | null>(null);
-
-  const dialCode = '*384*PEPEA#';
 
   const sendUSSDRequest = async (fullText: string) => {
     setIsLoading(true);
@@ -22,7 +21,7 @@ export default function USSDPhoneSimulator() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId: `AT_SIM_SESSION_${Date.now()}`,
-          serviceCode: '*384#',
+          serviceCode: USSD_SERVICE_CODE,
           phoneNumber,
           text: fullText,
         }),
@@ -42,10 +41,6 @@ export default function USSDPhoneSimulator() {
         if (fullText.startsWith('1*')) {
           setIncomingSMS(
             `PEPEA ROADMAP: KCSE grade converted to US 4.0 scale! 1) Create account at commonapp.org 2) Request Common App & CSS Fee Waivers ($0 application cost). Check dashboard for full guide.`
-          );
-        } else if (fullText.startsWith('3*')) {
-          setIncomingSMS(
-            `PEPEA ALERT: Outbound Voice Call triggered to Mwalimu. Recommendation letter will compile upon call completion.`
           );
         }
       } else {
@@ -83,8 +78,8 @@ export default function USSDPhoneSimulator() {
   const handleReset = () => {
     setIsSessionActive(false);
     setSessionText('');
-    setCurrentInput('*384*PEPEA#');
-    setScreenText('Dial *384*PEPEA# to start zero-data navigation.');
+    setCurrentInput(USSD_SERVICE_CODE);
+    setScreenText(`Dial ${USSD_SERVICE_CODE} to start zero-data navigation.`);
   };
 
   return (
@@ -99,7 +94,7 @@ export default function USSDPhoneSimulator() {
             </div>
 
             <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-parchment leading-tight">
-              Test <span className="font-mono text-safari-400">*384*PEPEA#</span> Live
+              Test <span className="font-mono text-safari-400">{USSD_SERVICE_CODE}</span> Live
             </h2>
 
             <p className="text-base text-parchment/70 leading-relaxed">
@@ -127,7 +122,7 @@ export default function USSDPhoneSimulator() {
                 <div>
                   <h4 className="text-sm font-semibold text-parchment">Urgent Nov 1 Early Action Checklist</h4>
                   <p className="text-xs text-parchment/60">
-                    Live 72-hour countdown for Common App essays, fee waivers, and teacher letters.
+                    Live 72-hour countdown for Common App essays, fee waivers, and recommendation requests.
                   </p>
                 </div>
               </div>
@@ -168,12 +163,12 @@ export default function USSDPhoneSimulator() {
               </button>
               <button
                 onClick={() => {
-                  setSessionText('5*Globwise');
-                  sendUSSDRequest('5*Globwise');
+                  setSessionText('4*Globwise');
+                  sendUSSDRequest('4*Globwise');
                 }}
                 className="px-2.5 py-1 rounded bg-canvas-surface border subtle-border hover:border-safari-500 text-parchment/80 font-mono transition-colors"
               >
-                5*Globwise (CUE Check)
+                4*Globwise (CUE Check)
               </button>
             </div>
           </div>
@@ -211,7 +206,7 @@ export default function USSDPhoneSimulator() {
                     type="text"
                     value={currentInput}
                     onChange={(e) => setCurrentInput(e.target.value)}
-                    placeholder={isSessionActive ? 'Enter choice...' : '*384*PEPEA#'}
+                    placeholder={isSessionActive ? 'Enter choice...' : USSD_SERVICE_CODE}
                     className="bg-transparent border-none text-right text-xs font-mono text-safari-200 focus:outline-none w-3/4"
                   />
                 </div>
@@ -228,7 +223,7 @@ export default function USSDPhoneSimulator() {
                       className="py-2.5 rounded-xl bg-safari-600 hover:bg-safari-500 text-white font-mono text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5 col-span-2"
                     >
                       <Phone className="w-3.5 h-3.5" />
-                      DIAL *384*PEPEA#
+                      DIAL {USSD_SERVICE_CODE}
                     </button>
                   ) : (
                     <>
