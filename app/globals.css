@@ -16,6 +16,20 @@
   --phosphor: 140 242 166;
   --screen: 7 19 11;
 
+  /* Dashboard palette (names from the first draft, values on the Apple-grade scale).
+     On the dark dashboard: ink = page, ink-surface = cards, bone = text, bone-muted = secondary text. */
+  --ink-surface: 29 29 31;
+  --ink-elevated: 42 42 45;
+  --bone: 251 251 253;
+  --bone-muted: 161 161 166;
+  --acacia: 30 59 42;
+  --acacia-light: 42 82 58;
+  --acacia-dark: 20 39 28;
+  --murram-light: 196 85 46;
+  --murram-dark: 133 48 15;
+  --saffron-light: 245 188 99;
+  --saffron-dark: 209 140 32;
+
   /* Default chapter: light */
   --bg: var(--snow);
   --surface: var(--paper);

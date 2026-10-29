@@ -11,9 +11,9 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { mockAidMatches, mockAidPrograms } from '@/lib/fixtures';
-import { Badge } from '@/components/ui/Badge';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/dashboard/ui/Badge';
+import { Card } from '@/components/dashboard/ui/Card';
+import { Button } from '@/components/dashboard/ui/Button';
 
 export default function FinancialAidPage() {
   return (

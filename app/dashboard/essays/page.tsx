@@ -29,10 +29,10 @@ import {
   EssayReviewResult,
   SchoolEssayPrompt,
 } from '@/lib/types';
-import { Badge } from '@/components/ui/Badge';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Textarea } from '@/components/ui/Textarea';
+import { Badge } from '@/components/dashboard/ui/Badge';
+import { Card } from '@/components/dashboard/ui/Card';
+import { Button } from '@/components/dashboard/ui/Button';
+import { Textarea } from '@/components/dashboard/ui/Textarea';
 
 export default function EssaysStudioPage() {
   const { student } = useStudentSession();
@@ -403,22 +403,22 @@ export default function EssaysStudioPage() {
                   </span>
                   {reviewResult.lineEdits.map((item, idx) => (
                     <div key={idx} className="p-3 rounded-lg bg-murram/10 border border-murram/30 text-xs font-display space-y-1">
-                      <p className="line-through text-bone-muted italic">&ldquo;{item.originalText}&rdquo;</p>
+                      <p className="line-through text-bone-muted italic">&ldquo;{item.original}&rdquo;</p>
                       <p className="text-bone font-medium">{item.suggestion}</p>
-                      <p className="text-[11px] text-bone-muted pt-0.5">{item.explanation}</p>
+                      <p className="text-[11px] text-bone-muted pt-0.5">{item.issue}</p>
                     </div>
                   ))}
                 </div>
               )}
 
               {/* Missing Kenyan Context Gaps */}
-              {reviewResult.kenyanContextGaps && reviewResult.kenyanContextGaps.length > 0 && (
+              {reviewResult.kenyanContextTips && reviewResult.kenyanContextTips.trim().length > 0 && (
                 <div className="p-3 rounded-lg bg-acacia/20 border border-acacia text-xs font-display space-y-1">
                   <span className="font-mono text-[#8CF2A6] font-semibold text-[10px] uppercase block">
                     Kenyan Context to Clarify:
                   </span>
                   <ul className="list-disc list-inside space-y-1 text-bone">
-                    {reviewResult.kenyanContextGaps.map((gap, i) => (
+                    {reviewResult.kenyanContextTips.split('\n').filter(Boolean).map((gap, i) => (
                       <li key={i}>{gap}</li>
                     ))}
                   </ul>

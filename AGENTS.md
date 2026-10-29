@@ -16,6 +16,7 @@
 6. **No fake success in live mode.** A failed AT, Gemini or DB call must return an error, never a silent mock. Mocks only run when `NEXT_PUBLIC_DEMO_MODE=true`.
 7. **Never commit secrets.** `.env.local` stays untracked. Keys are server-side only; the Supabase service role key must never reach the browser.
 8. **Verify data before it is shown.** Rows with `data_verified_at IS NULL` are shown as "Unverified". Verify against official sites, then set the date.
+9. **Merge hygiene (added after the 2026-10-29 merge incident, see section 12).** Pull `master` before you start. Never create two files whose names differ only by case (`Button.tsx` and `button.tsx`): Windows and macOS treat them as one file, so one silently overwrites the other. Before you push, run `npx tsc --noEmit` and `npx next build`; both must pass. If a merge conflicts in `AGENTS.md`, `tailwind.config.ts` or `app/globals.css`, keep both sides, never drop the other person's work, and log your files in section 11 in the same commit.
 
 Status legend: `[ ]` pending, `[/]` in progress, `[x]` done, `[!]` blocked. Priority: **P0** blocker, **P1** MVP, **P2** polish.
 
@@ -179,17 +180,34 @@ Read `DESIGN.md` fully first. Use the types in `lib/types.ts` for every API prop
 
 | ID | P | Task | Depends on | Status |
 |---|---|---|---|---|
-| FE-S-01 | P0 | Dashboard shell: `/dashboard` layout, left rail (desktop) and bottom tabs (phone), phone-number sign-in (OTP is out of scope for the MVP, see section 12), student session | FE-C-01, FE-C-02 | `[ ]` |
-| FE-S-02 | P0 | Student Context UI `/dashboard/context`: profile editor, facts list with delete, consent, per-channel conversation history, "what Gemini sees" disclosure | BE-API-01 | `[ ]` |
-| FE-S-03 | P0 | GPA Converter `/dashboard/gpa`: grade selector, points slider, monumental result, "indicative" badge | BE-API-02 | `[ ]` |
-| FE-S-04 | P1 | Application Guide `/dashboard/guide`: 12-step stepper by phase, mark done, cost and time chips | BE-API-03 | `[ ]` |
-| FE-S-05 | P0 | Essays `/dashboard/essays`: **type picker, then school and prompt picker (for school-specific types), then editor with live word count**, review panel with rubric bars and line edits, version timeline at `/dashboard/essays/[id]` | BE-API-04, 05, 06 | `[ ]` |
-| FE-S-06 | P1 | LOR Review `/dashboard/lor`: form, four-axis score, gaps and "what to add about Kenya" | BE-API-07 | `[ ]` |
-| FE-S-07 | P1 | University Advisory `/dashboard/advisor`: reach/target/likely columns, aid outlook chips, question box, unverified badges | BE-API-08 | `[ ]` |
-| FE-S-08 | P1 | Financial Aid Scout `/dashboard/aid`: ranked programs, forms and deadlines, official links | BE-API-09 | `[ ]` |
-| FE-S-09 | P1 | Dashboard home: next-deadline countdown, guide progress ring, asymmetric module grid, designed empty states | FE-S-03 to 08 | `[ ]` |
+| FE-S-01 | P0 | Dashboard shell: `/dashboard` layout, left rail (desktop) and bottom tabs (phone), phone-number sign-in (OTP is out of scope for the MVP, see section 12), student session | FE-C-01, FE-C-02 | `[/]` Sandra |
+| FE-S-02 | P0 | Student Context UI `/dashboard/context`: profile editor, facts list with delete, consent, per-channel conversation history, "what Gemini sees" disclosure | BE-API-01 | `[/]` Sandra |
+| FE-S-03 | P0 | GPA Converter `/dashboard/gpa`: grade selector, points slider, monumental result, "indicative" badge | BE-API-02 | `[/]` Sandra |
+| FE-S-04 | P1 | Application Guide `/dashboard/guide`: 12-step stepper by phase, mark done, cost and time chips | BE-API-03 | `[/]` Sandra |
+| FE-S-05 | P0 | Essays `/dashboard/essays`: **type picker, then school and prompt picker (for school-specific types), then editor with live word count**, review panel with rubric bars and line edits, version timeline at `/dashboard/essays/[id]` | BE-API-04, 05, 06 | `[/]` Sandra |
+| FE-S-06 | P1 | LOR Review `/dashboard/lor`: form, four-axis score, gaps and "what to add about Kenya" | BE-API-07 | `[/]` Sandra |
+| FE-S-07 | P1 | University Advisory `/dashboard/advisor`: reach/target/likely columns, aid outlook chips, question box, unverified badges | BE-API-08 | `[/]` Sandra |
+| FE-S-08 | P1 | Financial Aid Scout `/dashboard/aid`: ranked programs, forms and deadlines, official links | BE-API-09 | `[/]` Sandra |
+| FE-S-09 | P1 | Dashboard home: next-deadline countdown, guide progress ring, asymmetric module grid, designed empty states | FE-S-03 to 08 | `[/]` Sandra |
 | FE-S-10 | P2 | Realtime: subscribe to `essay_versions`, `lor_reviews`, `conversation_messages` for the signed-in student | BE-DB-01 | `[ ]` |
 | FE-S-11 | P2 | WhatsApp transcript view inside the context page | BE-API-10 | `[ ]` |
+| FE-S-12 | P1 | **Converge the two UI kits.** The dashboard has its own kit in `components/dashboard/ui/` (Button, Card, Badge, Input, Textarea) with different prop names from `components/ui/`. Move the dashboard onto `components/ui/` and the chapter tokens (`bg-bg`, `text-fg`, `bg-accent`), then delete `components/dashboard/ui/` and the legacy aliases in `tailwind.config.ts` (`ink-surface`, `bone`, `acacia`, ...) | FE-S-01 to 09 | `[ ]` |
+
+**Sandra status notes (scaffold merged via PR #4, 2026-10-29; logged here by Claude because the merge dropped the log)**
+
+- Built: dashboard shell and nav (`app/dashboard/layout.tsx`, `components/dashboard/DashboardNav.tsx`), phone-number session (`lib/session-context.tsx`, stored in localStorage, no OTP yet), and pages for overview, GPA, guide, essays, LOR, advisor, aid and context, all running on typed fixtures in `lib/fixtures/index.ts`.
+- Why FE-S-01 to FE-S-09 are `[/]` and not `[x]`: they are scaffolds on mock data. Nothing calls an API yet (the BE routes are not built), the essay flow still needs the type then school then prompt gating checked against `ESSAY_CATALOG`, and no tests exist. Mark each `[x]` when it runs against its BE route.
+- On the 2026-10-29 merge fix (below), the dashboard now builds, typechecks and renders in the shared palette (checked in Chrome at 1440 and 390 wide, no console errors).
+- Sandra: please read section 12, item 6 and the new rule 9, then pull `master` before your next change.
+
+**Merge fix, 2026-10-29 (Collins, with Claude)**
+
+PR #4 merged cleanly in git but left `master` broken. What was wrong and what changed:
+
+1. *Filename case collision.* Sandra's kit was added as `components/ui/Button.tsx`, `Card.tsx`, `Badge.tsx`, `Input.tsx`, `Textarea.tsx` next to Collins's `button.tsx`, `card.tsx`, and so on. Git on Windows (`core.ignorecase=true`) did not flag it, but Windows could hold only one file per name, so the two kits overwrote each other and TypeScript reported casing errors. Fix: Sandra's kit moved to `components/dashboard/ui/`, and her imports updated. `components/ui/` is Collins's kit only.
+2. *Design tokens lost in the merge.* Sandra's branch added `ink-surface`, `bone`, `acacia`, `saffron-light`, `murram-light` and a Fraunces font to `tailwind.config.ts` and `app/globals.css`. The conflict was resolved by keeping Collins's Apple-grade config and dropping hers, so the dashboard had no colours. Fix: those names are kept as aliases, re-pointed onto the new palette (`bone` is snow, `ink-surface` is graphite, and so on), `font-display`, `font-editorial` and `font-fraunces` all map to Geist, and the missing `fade-in` animation and `duration-160/240` were added.
+3. *Mock review data did not match the contract.* Her essay and LOR fixtures used field names that are not in `lib/types.ts` (`originalText`, `explanation`, `kenyanContextGaps`, `scores`, `whatToAddAboutKenya`) and a verdict that does not exist (`Competitive`), and lacked required fields. `next build` failed on 17 type errors. Fix: the fixtures and the two pages now follow the contract (`original`, `issue`, `kenyanContextTips` as one tip per line, `rubricScores`, `kenyaContextToAdd`, verdict `Needs Specifics`). The contract itself did not change except for one doc comment.
+4. *`AGENTS.md` was never updated for the dashboard.* Her commit did not touch it, and the merge kept only Collins's version. Her work is logged in section 11 below.
 
 ### 6.3 Frontend tests
 
@@ -318,6 +336,16 @@ Add a row for every new prompt or heuristic and bump the version string on any e
 | 2026-10-29 | Claude (for Collins) | CREATE | `lib/utils.ts`, `lib/motion.ts`, `lib/strings.ts`, `lib/kcse-scale.ts`, `lib/fixtures/essays.ts` | Helpers, motion tokens, en/sw strings, offline copies of seed data |
 | 2026-10-29 | Claude (for Collins) | DELETE | `components/AOReviewStudio.tsx`, `CUERadar.tsx`, `CollegeMatcher.tsx`, `Footer.tsx`, `HeroBanner.tsx`, `Navbar.tsx`, `USSDPhoneSimulator.tsx`, `VoiceStudio.tsx` | Replaced by the new landing components. The essay review UI is now Sandra's FE-S-05; the mock interview voice flow stays on the backend (`/api/at/voice`) with no landing section |
 | 2026-10-29 | Claude (for Collins) | MODIFY | `DESIGN.md` | Revised to the Apple-grade direction; sections 3, 4, 7.1 and 12 updated to match what is built |
+| 2026-10-29 | Sandra (logged by Claude) | CREATE | `app/dashboard/layout.tsx`, `app/dashboard/page.tsx` | Dashboard shell and overview (FE-S-01, FE-S-09), on fixtures |
+| 2026-10-29 | Sandra (logged by Claude) | CREATE | `app/dashboard/gpa/page.tsx`, `guide/page.tsx`, `essays/page.tsx`, `lor/page.tsx`, `advisor/page.tsx`, `aid/page.tsx`, `context/page.tsx` | Module pages (FE-S-02 to FE-S-08), on fixtures |
+| 2026-10-29 | Sandra (logged by Claude) | CREATE | `components/dashboard/DashboardNav.tsx`, `lib/session-context.tsx`, `lib/fixtures/index.ts` | Dashboard navigation, phone-number session, typed fixtures |
+| 2026-10-29 | Sandra (logged by Claude) | CREATE | `components/dashboard/ui/{Badge,Button,Card,Input,Textarea}.tsx` | Dashboard UI kit (first pushed as `components/ui/*`; moved by the merge fix) |
+| 2026-10-29 | Claude (for Collins) | MODIFY | `tailwind.config.ts`, `app/globals.css` | Merge fix: restored the dashboard colour and font names as aliases on the Apple-grade palette; added `fade-in`, `duration-160/240` |
+| 2026-10-29 | Claude (for Collins) | MODIFY | `app/dashboard/*/page.tsx`, `app/dashboard/page.tsx` | Merge fix: imports now point at `components/dashboard/ui/` |
+| 2026-10-29 | Claude (for Collins) | MODIFY | `lib/fixtures/index.ts`, `app/dashboard/essays/page.tsx`, `app/dashboard/lor/page.tsx` | Merge fix: review mocks and the two pages conformed to `lib/types.ts` |
+| 2026-10-29 | Claude (for Collins) | MODIFY | `components/ui/{badge,button,card,input,textarea}.tsx` | Merge fix: restored Collins's kit under lowercase names; removed the capitalised duplicates from the index |
+| 2026-10-29 | Claude (for Collins) | MODIFY | `lib/types.ts` | Doc comment: `kenyanContextTips` is one tip per line |
+| 2026-10-29 | Claude (for Collins) | MODIFY | `AGENTS.md` | Rule 9, FE-S statuses, FE-S-12, merge-fix notes, open items |
 
 ---
 
@@ -328,3 +356,6 @@ Add a row for every new prompt or heuristic and bump the version string on any e
 3. **Authentication:** the MVP identifies students by phone number. Without OTP, anyone who knows a number can open that student's dashboard. Decide before launch: SMS OTP via AT (recommended) or accept this for a closed demo only. (Team)
 4. **Verified data:** seed rows are unverified until BE-DB-05 is done.
 5. **Kiswahili:** designed for, not translated.
+6. **Merge incident (2026-10-29): what to do differently.** PR #4 merged with no textual conflict markers and still broke `master` (case-colliding filenames, dropped design tokens, 17 type errors, no `AGENTS.md` update). A clean git merge is not proof that the app works. Before any push to `master`: `git pull`, `npx tsc --noEmit`, `npx next build`. (Team)
+7. **Two UI kits until FE-S-12 lands.** `components/ui/` (Collins) and `components/dashboard/ui/` (Sandra) are intentionally separate for now. Do not add a file to one that differs only by case from a file in the other. (Sandra, Collins)
+8. **Duplicate fixtures.** `lib/fixtures/essays.ts` (landing) and `lib/fixtures/index.ts` (dashboard) both describe essay types and schools. Consolidate when the API routes replace them (BE-API-04). (Sandra, Collins)

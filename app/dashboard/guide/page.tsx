@@ -16,9 +16,9 @@ import {
 } from 'lucide-react';
 import { mockGuideSteps } from '@/lib/fixtures';
 import { GuideStep, GuidePhase, ProgressStatus } from '@/lib/types';
-import { Badge } from '@/components/ui/Badge';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/dashboard/ui/Badge';
+import { Card } from '@/components/dashboard/ui/Card';
+import { Button } from '@/components/dashboard/ui/Button';
 import { USSD_SERVICE_CODE } from '@/lib/constants';
 
 const phaseLabels: Record<GuidePhase, { title: string; subtitle: string }> = {

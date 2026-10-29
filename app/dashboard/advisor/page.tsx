@@ -13,9 +13,9 @@ import {
 import { useStudentSession } from '@/lib/session-context';
 import { mockUniversityMatches, mockUniversities } from '@/lib/fixtures';
 import { UniversityMatch, MatchTier } from '@/lib/types';
-import { Badge } from '@/components/ui/Badge';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/dashboard/ui/Badge';
+import { Card } from '@/components/dashboard/ui/Card';
+import { Button } from '@/components/dashboard/ui/Button';
 
 export default function AdvisorPage() {
   const { student } = useStudentSession();

@@ -18,10 +18,10 @@ import {
 import { useStudentSession } from '@/lib/session-context';
 import { mockStudentFacts } from '@/lib/fixtures';
 import { StudentFact, Activity } from '@/lib/types';
-import { Badge } from '@/components/ui/Badge';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Badge } from '@/components/dashboard/ui/Badge';
+import { Card } from '@/components/dashboard/ui/Card';
+import { Button } from '@/components/dashboard/ui/Button';
+import { Input } from '@/components/dashboard/ui/Input';
 
 export default function StudentContextPage() {
   const { student, phoneNumber, updateProfile } = useStudentSession();

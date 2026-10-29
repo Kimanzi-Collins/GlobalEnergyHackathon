@@ -300,6 +300,7 @@ export interface EssayReviewResult {
   committeeSummary: string;
   clichesDetected: string[];
   lineEdits: Array<{ original: string; issue: string; suggestion: string }>;
+  /** One tip per line. The dashboard splits on newlines to render a list. */
   kenyanContextTips: string;
   rewriteExample: string;
 }

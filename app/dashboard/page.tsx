@@ -22,9 +22,9 @@ import {
   mockEssays,
   mockStudentFacts,
 } from '@/lib/fixtures';
-import { Badge } from '@/components/ui/Badge';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/dashboard/ui/Badge';
+import { Card } from '@/components/dashboard/ui/Card';
+import { Button } from '@/components/dashboard/ui/Button';
 import { USSD_SERVICE_CODE } from '@/lib/constants';
 
 export default function DashboardHome() {

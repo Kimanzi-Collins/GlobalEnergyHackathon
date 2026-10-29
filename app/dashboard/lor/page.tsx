@@ -12,10 +12,10 @@ import {
 } from 'lucide-react';
 import { mockSampleLorResult } from '@/lib/fixtures';
 import { LorReviewResult } from '@/lib/types';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Textarea } from '@/components/ui/Textarea';
-import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/dashboard/ui/Card';
+import { Button } from '@/components/dashboard/ui/Button';
+import { Textarea } from '@/components/dashboard/ui/Textarea';
+import { Input } from '@/components/dashboard/ui/Input';
 
 export default function LorReviewPage() {
   const [recommenderName, setRecommenderName] = useState('Mwalimu John Mwangi');
@@ -84,7 +84,7 @@ export default function LorReviewPage() {
 
             <div className="flex items-center justify-between pt-2">
               <span className="text-xs font-mono text-bone-muted">
-                Evaluates 4 axes: Specificity, Rank, Anecdote, Context.
+                Evaluates 4 axes: Specificity, Endorsement, Tone, Context.
               </span>
               <Button
                 variant="primary"
@@ -125,10 +125,10 @@ export default function LorReviewPage() {
               {/* 4-Axis Scores */}
               <div className="space-y-2.5">
                 {[
-                  { key: 'specificity', label: 'Concrete Details & Anecdotes', score: result.scores.specificity, max: 25 },
-                  { key: 'comparativeRank', label: 'Comparative Ranking in Career', score: result.scores.comparativeRank, max: 25 },
-                  { key: 'anecdoteStrength', label: 'Problem-Solving Instances', score: result.scores.anecdoteStrength, max: 25 },
-                  { key: 'kenyanContextClarity', label: 'Kenyan Classroom Context', score: result.scores.kenyanContextClarity, max: 25 },
+                  { key: 'specificity', label: 'Concrete Details & Anecdotes', score: result.rubricScores.specificity, max: 25 },
+                  { key: 'endorsement', label: 'Comparative Endorsement', score: result.rubricScores.endorsement, max: 25 },
+                  { key: 'tone', label: 'Genuine, Uninflated Tone', score: result.rubricScores.tone, max: 25 },
+                  { key: 'context', label: 'Kenyan Classroom Context', score: result.rubricScores.context, max: 25 },
                 ].map((item) => (
                   <div key={item.key} className="space-y-1">
                     <div className="flex items-center justify-between text-xs font-display">
@@ -151,7 +151,7 @@ export default function LorReviewPage() {
                   What Mwalimu Should Add About Kenya:
                 </span>
                 <ul className="list-disc list-inside space-y-1 text-bone">
-                  {result.whatToAddAboutKenya.map((gap, i) => (
+                  {result.kenyaContextToAdd.map((gap, i) => (
                     <li key={i}>{gap}</li>
                   ))}
                 </ul>

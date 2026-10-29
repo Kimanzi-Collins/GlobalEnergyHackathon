@@ -17,14 +17,19 @@ const config: Config = {
     extend: {
       colors: {
         // Palette
-        ink: rgb('ink'),
         graphite: rgb('graphite'),
         paper: rgb('paper'),
         snow: rgb('snow'),
-        murram: rgb('murram'),
-        saffron: rgb('saffron'),
         phosphor: rgb('phosphor'),
         screen: rgb('screen'),
+        // The dashboard (components/dashboard, app/dashboard) was written against the first design draft and
+        // uses these names. They are kept, re-pointed onto the Apple-grade palette, so both surfaces match.
+        // New code should prefer the chapter tokens below (bg, surface, fg, fg2, line, accent).
+        ink: { DEFAULT: rgb('ink'), surface: rgb('ink-surface'), elevated: rgb('ink-elevated') },
+        bone: { DEFAULT: rgb('bone'), muted: rgb('bone-muted') },
+        acacia: { DEFAULT: rgb('acacia'), light: rgb('acacia-light'), dark: rgb('acacia-dark') },
+        murram: { DEFAULT: rgb('murram'), light: rgb('murram-light'), dark: rgb('murram-dark') },
+        saffron: { DEFAULT: rgb('saffron'), light: rgb('saffron-light'), dark: rgb('saffron-dark') },
         // Chapter tokens
         bg: rgb('bg'),
         surface: rgb('surface'),
@@ -37,6 +42,14 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-geist-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['var(--font-geist-mono)', 'ui-monospace', 'monospace'],
+        // Dashboard aliases (font-display, font-editorial, font-fraunces): one typeface across the product.
+        display: ['var(--font-geist-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        editorial: ['var(--font-geist-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        fraunces: ['var(--font-geist-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
+      transitionDuration: {
+        160: '160ms',
+        240: '240ms',
       },
       fontSize: {
         // Fluid scale, display to body is well over 10:1 (see DESIGN.md section 3)
@@ -59,6 +72,10 @@ const config: Config = {
       },
       keyframes: {
         blink: { '0%, 49%': { opacity: '1' }, '50%, 100%': { opacity: '0' } },
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translate3d(0, 8px, 0)' },
+          '100%': { opacity: '1', transform: 'translate3d(0, 0, 0)' },
+        },
         rise: {
           '0%': { transform: 'translate3d(0, 24px, 0)', opacity: '0' },
           '100%': { transform: 'translate3d(0, 0, 0)', opacity: '1' },
@@ -78,6 +95,7 @@ const config: Config = {
       },
       animation: {
         blink: 'blink 1s steps(1) infinite',
+        'fade-in': 'fade-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
         rise: 'rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both',
         lift: 'lift 1.1s cubic-bezier(0.16, 1, 0.3, 1) both',
         word: 'word 1s cubic-bezier(0.16, 1, 0.3, 1) both',

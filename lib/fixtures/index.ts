@@ -704,41 +704,35 @@ export const mockSampleReviewResult: EssayReviewResult = {
   },
   verdict: 'Strong Admit',
   committeeSummary: 'A gripping opening that immediately grounds the reader in Kericho without falling into clichéd despair. The candidate demonstrates genuine intellectual vitality through self-taught electronics.',
+  clichesDetected: ['Ever since I was a little boy', 'a very prestigious honor'],
   lineEdits: [
     {
-      originalText: 'Ever since I was a little boy, science has been my greatest passion.',
+      original: 'Ever since I was a little boy, science has been my greatest passion.',
+      issue: 'US admissions officers read 40 essays a day; abstract openings cause reader fatigue.',
       suggestion: 'Cut this generic Insha opening. Start right with the burned copper wire on your desk.',
-      explanation: 'US admissions officers read 40 essays a day; abstract openings cause reader fatigue.',
     },
     {
-      originalText: 'I served as the school captain which was a very prestigious honor.',
+      original: 'I served as the school captain which was a very prestigious honor.',
+      issue: 'Show the action and problem-solving, do not rely on titles alone.',
       suggestion: 'Describe the specific conflict you resolved when dormitory power failed during mock exams.',
-      explanation: 'Show the action and problem-solving, do not rely on titles alone.',
     },
   ],
-  kenyanContextGaps: [
+  // One tip per line. The UI splits on newlines (the contract keeps this a single string).
+  kenyanContextTips:
     'Explain briefly that "Form 4" is the final senior year of secondary education and KCSE is the nationwide qualifying exit examination.',
-  ],
-  strengths: [
-    'Authentic conversational cadence with vivid tactile descriptions of hardware.',
-    'Clear humble initiative: built tools out of discarded radio transistors.',
-  ],
-  weaknesses: [
-    'Ending rushes into broad philosophical statements about the future of Africa instead of anchoring back to the workshop.',
-  ],
-  oneActionableRewrite: 'Rewrite the conclusion: bring the final sentence back to the breadboard you left wired on your desk before leaving for school.',
+  rewriteExample:
+    'Rewrite the conclusion: bring the final sentence back to the breadboard you left wired on your desk before leaving for school.',
 };
 
 export const mockSampleLorResult: LorReviewResult = {
   overallScore: 78,
-  scores: {
+  rubricScores: {
     specificity: 19,
-    comparativeRank: 20,
-    anecdoteStrength: 18,
-    kenyanContextClarity: 21,
+    context: 21,
+    endorsement: 20,
+    tone: 18,
   },
-  verdict: 'Competitive',
-  summary: 'A warm, supportive letter that clearly loves the student. It needs 1-2 more concrete anecdotes showing how Kwame behaves when facing a challenging physics concept.',
+  verdict: 'Needs Specifics',
   strengths: [
     'Clear superlative statement placing the student in top 1% of the teacher’s 15-year career.',
     'Mentions student’s patience when assisting struggling classmates.',
@@ -747,13 +741,14 @@ export const mockSampleLorResult: LorReviewResult = {
     'Uses generic adjectives ("hardworking", "obedient", "disciplined") without demonstrating them through classroom scenes.',
     'Does not mention the specific robotics project the student built for the science fair.',
   ],
-  whatToAddAboutKenya: [
+  kenyaContextToAdd: [
     'Clarify the national grading curve: an A in KCSE Physics represents under 2% of candidates nationally in Kenya.',
     'Mention that the student achieved this in a laboratory that lacked digital oscilloscopes.',
   ],
-  counselorChecklist: [
-    'Include school profile document alongside the letter.',
-    'Confirm the official school stamp and signature are present.',
+  rewrites: [
+    {
+      original: 'Kwame is a hardworking and obedient student.',
+      suggestion: 'Describe one afternoon when Kwame stayed after class to debug a circuit with two classmates.',
+    },
   ],
 };
-
