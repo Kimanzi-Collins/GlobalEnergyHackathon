@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { RouteArc, ROUTE_D } from '@/components/landing/route-arc';
-import { Mark } from '@/components/landing/nav';
+import { Mark } from '@/components/ui/mark';
 import { t } from '@/lib/strings';
 
 /** 404: the dotted route ends mid-ocean. */

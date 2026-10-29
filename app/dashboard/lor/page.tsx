@@ -1,177 +1,154 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  MailCheck,
-  Sparkles,
-  Send,
-  AlertTriangle,
-  Award,
-  CheckCircle2,
-  FileText,
-} from 'lucide-react';
+import { MailCheck, Sparkles } from 'lucide-react';
 import { mockSampleLorResult } from '@/lib/fixtures';
-import { LorReviewResult } from '@/lib/types';
-import { Card } from '@/components/ui/card';
+import type { LorReviewResult } from '@/lib/types';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/toast';
+import { Reveal } from '@/components/motion/reveal';
+import { PageHero } from '@/components/dashboard/page-hero';
+import { Panel } from '@/components/dashboard/panel';
+import { Stat } from '@/components/dashboard/stat';
+import { Meter } from '@/components/dashboard/meter';
+import { EmptyState } from '@/components/dashboard/empty-state';
 
-export default function LorReviewPage() {
-  const [recommenderName, setRecommenderName] = useState('Mwalimu John Mwangi');
-  const [recommenderRole, setRecommenderRole] = useState('Head of Science / Physics Teacher');
-  const [letterDraft, setLetterDraft] = useState(
-    'I have known Kwame for over three years as his Form 3 and Form 4 Physics instructor. He is an exceptionally disciplined, polite, and hardworking student who consistently completed all laboratory practicals. In our county mock examinations, he placed in the top 1% of candidates. Whenever other students struggled with electricity and magnetism concepts, Kwame patiently explained the calculations after prep hours. I recommend him without reservation for admission.'
+const AXES: Array<{ key: keyof LorReviewResult['rubricScores']; label: string; hint: string }> = [
+  { key: 'specificity', label: 'Concrete scenes and evidence', hint: 'Stories, not adjectives' },
+  { key: 'context', label: 'Kenyan classroom context', hint: 'KCSE, class size, resources' },
+  { key: 'endorsement', label: 'Comparative endorsement', hint: 'Where the student ranks' },
+  { key: 'tone', label: 'Genuine, uninflated tone', hint: 'Believable praise' },
+];
+
+const DEFAULT_LETTER =
+  'I have known Kwame for over three years as his Form 3 and Form 4 Physics instructor. He is an exceptionally disciplined, polite, and hardworking student who consistently completed all laboratory practicals. In our county mock examinations, he placed in the top 1% of candidates. Whenever other students struggled with electricity and magnetism concepts, Kwame patiently explained the calculations after prep hours. I recommend him without reservation for admission.';
+
+const countWords = (t: string) => (t.trim() ? t.trim().split(/\s+/).length : 0);
+
+function Bullets({ items, tone }: { items: string[]; tone: 'good' | 'accent' }) {
+  return (
+    <ul className="space-y-3.5">
+      {items.map((t, i) => (
+        <li key={i} className="flex gap-3 text-[15px] leading-relaxed">
+          <span aria-hidden="true" className={tone === 'good' ? 'mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-phosphor' : 'mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent'} />
+          {t}
+        </li>
+      ))}
+    </ul>
   );
+}
 
-  const [isReviewing, setIsReviewing] = useState(false);
+/** Review a teacher's recommendation draft. Pepea never writes the letter; it shows what a US reader will miss. */
+export default function LorReviewPage() {
+  const { push } = useToast();
+  const [name, setName] = useState('Mwalimu John Mwangi');
+  const [role, setRole] = useState('Head of Science, Physics teacher');
+  const [letter, setLetter] = useState(DEFAULT_LETTER);
+  const [reviewing, setReviewing] = useState(false);
   const [result, setResult] = useState<LorReviewResult | null>(mockSampleLorResult);
 
-  const handleReview = () => {
-    setIsReviewing(true);
-    setTimeout(() => {
+  const words = countWords(letter);
+
+  const review = () => {
+    setReviewing(true);
+    window.setTimeout(() => {
       setResult(mockSampleLorResult);
-      setIsReviewing(false);
+      setReviewing(false);
+      push({ title: 'Sample review ready', description: 'The live Gemini review arrives with the letters API.' });
     }, 1200);
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line/10">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-accent uppercase tracking-widest mb-1">
-            <MailCheck className="w-3.5 h-3.5" />
-            <span>Teacher Recommendation Analysis • Gemini 2.5</span>
-          </div>
-          <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-fg">
-            Teacher LOR Review
-          </h1>
-          <p className="text-sm text-fg2 mt-1 max-w-2xl">
-            Evaluate teacher recommendation drafts against US holistic standards. Pepea never ghostwrites letters; it helps teachers highlight concrete classroom anecdotes and explain the Kenyan grading curve.
-          </p>
-        </div>
-      </div>
+    <div>
+      <PageHero
+        eyebrow="Teacher letters"
+        icon={MailCheck}
+        title={'Strong letters\ntell stories.'}
+        accentWord="stories."
+        description="Paste your teacher's draft and see where a US reader will want more detail or Kenyan context. Pepea never writes the letter. The words must be theirs."
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Recommender details and draft letter */}
-        <div className="lg:col-span-7 space-y-4">
-          <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-4">
-            <h3 className="font-editorial text-xl font-bold text-fg">
-              Recommender Information
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Input
-                label="Teacher / Recommender Name"
-                value={recommenderName}
-                onChange={(e) => setRecommenderName(e.target.value)}
-              />
-              <Input
-                label="Role / Subject Taught"
-                value={recommenderRole}
-                onChange={(e) => setRecommenderRole(e.target.value)}
-              />
+      <div className="grid gap-4 lg:grid-cols-12 lg:gap-5">
+        <Reveal className="lg:col-span-7">
+          <Panel eyebrow="The letter" title="Your teacher's draft" className="h-full">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Input label="Recommender" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input label="Role and subject" value={role} onChange={(e) => setRole(e.target.value)} />
             </div>
-
-            <div className="pt-2">
-              <Textarea
-                label="Letter Draft Text"
-                value={letterDraft}
-                onChange={(e) => setLetterDraft(e.target.value)}
-                className="min-h-[220px]"
-                hint="Draft provided by your teacher for review prior to official Common App submission."
-              />
+            <div className="mt-5">
+              <Textarea label="Draft letter" value={letter} onChange={(e) => setLetter(e.target.value)} className="min-h-[300px] text-[16px] leading-[1.7]" />
             </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-xs font-mono text-fg2">
-                Evaluates 4 axes: Specificity, Endorsement, Tone, Context.
-              </span>
-              <Button
-                variant="primary"
-                size="md"
-                onClick={handleReview}
-                isLoading={isReviewing}
-                disabled={!letterDraft.trim()}
-                className="text-xs"
-              >
-                <Sparkles className="w-4 h-4 mr-1.5" />
-                Analyze Draft
+            <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="tnum text-sm text-fg2">{words} words · checked on four things below</p>
+              <Button onClick={review} loading={reviewing} disabled={words < 30}>
+                <Sparkles className="h-4 w-4" />
+                Review this letter
               </Button>
             </div>
-          </Card>
-        </div>
+          </Panel>
+        </Reveal>
 
-        {/* Right Column: 4-Axis Rubric Score & Actionable Gaps */}
-        <div className="lg:col-span-5 space-y-4">
-          {result && (
-            <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-line/10">
-                <div>
-                  <span className="text-[11px] font-mono uppercase text-fg2 tracking-wider">
-                    Assessment
-                  </span>
-                  <h4 className="font-editorial text-2xl font-bold text-fg">
-                    {result.verdict}
-                  </h4>
-                </div>
-                <div className="text-right">
-                  <span className="text-3xl font-editorial font-bold text-accent">
-                    {result.overallScore}
-                  </span>
-                  <span className="text-xs font-mono text-fg2 block">/ 100</span>
-                </div>
-              </div>
-
-              {/* 4-Axis Scores */}
-              <div className="space-y-2.5">
-                {[
-                  { key: 'specificity', label: 'Concrete Details & Anecdotes', score: result.rubricScores.specificity, max: 25 },
-                  { key: 'endorsement', label: 'Comparative Endorsement', score: result.rubricScores.endorsement, max: 25 },
-                  { key: 'tone', label: 'Genuine, Uninflated Tone', score: result.rubricScores.tone, max: 25 },
-                  { key: 'context', label: 'Kenyan Classroom Context', score: result.rubricScores.context, max: 25 },
-                ].map((item) => (
-                  <div key={item.key} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-fg">{item.label}</span>
-                      <span className="font-mono text-accent">{item.score}/{item.max}</span>
+        <Reveal delay={0.08} className="lg:col-span-5">
+          <div className="lg:sticky lg:top-8">
+            {result ? (
+              <Panel glow eyebrow="Assessment" title={result.verdict} action={<Badge kind="indicative">Sample review</Badge>}>
+                <Stat label="Overall" value={String(result.overallScore)} unit="/ 100" size="md" gradient />
+                <div className="mt-8 space-y-5">
+                  {AXES.map((a, i) => (
+                    <div key={a.key}>
+                      <Meter label={a.label} value={result.rubricScores[a.key]} max={25} delay={0.1 + i * 0.08} />
+                      <p className="mt-1.5 text-xs text-fg2">{a.hint}</p>
                     </div>
-                    <div className="w-full h-1.5 bg-bg rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-accent rounded-full"
-                        style={{ width: `${(item.score / item.max) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* What to Add About Kenya */}
-              <div className="p-3.5 rounded-2xl bg-acacia/20 ring-1 ring-inset ring-acacia/50 space-y-2 text-xs">
-                <span className="font-mono text-[#8CF2A6] font-bold text-[10px] uppercase block">
-                  What Mwalimu Should Add About Kenya:
-                </span>
-                <ul className="list-disc list-inside space-y-1 text-fg">
-                  {result.kenyaContextToAdd.map((gap, i) => (
-                    <li key={i}>{gap}</li>
                   ))}
-                </ul>
-              </div>
-
-              {/* Gaps to Address */}
-              <div className="p-3.5 rounded-2xl bg-bg/70 ring-1 ring-inset ring-line/10 space-y-1.5 text-xs">
-                <span className="font-mono text-accent font-bold text-[10px] uppercase block">
-                  Missing Evidence Gaps:
-                </span>
-                <ul className="list-disc list-inside space-y-1 text-fg2">
-                  {result.gaps.map((g, i) => (
-                    <li key={i}>{g}</li>
-                  ))}
-                </ul>
-              </div>
-            </Card>
-          )}
-        </div>
+                </div>
+              </Panel>
+            ) : (
+              <Panel>
+                <EmptyState icon={MailCheck} title="Your assessment appears here" body="Paste a draft of at least 30 words, then choose Review this letter." ussdHint />
+              </Panel>
+            )}
+          </div>
+        </Reveal>
       </div>
+
+      {result && (
+        <div className="mt-4 grid gap-4 lg:mt-5 lg:grid-cols-3 lg:gap-5">
+          <Reveal>
+            <Panel eyebrow="Working well" title="Strengths" className="h-full">
+              <Bullets items={result.strengths} tone="good" />
+            </Panel>
+          </Reveal>
+          <Reveal delay={0.06}>
+            <Panel eyebrow="Missing evidence" title="Gaps" className="h-full">
+              <Bullets items={result.gaps} tone="accent" />
+            </Panel>
+          </Reveal>
+          <Reveal delay={0.12}>
+            <Panel eyebrow="For a US reader" title="What to add about Kenya" className="h-full">
+              <Bullets items={result.kenyaContextToAdd} tone="good" />
+            </Panel>
+          </Reveal>
+        </div>
+      )}
+
+      {result && result.rewrites.length > 0 && (
+        <Reveal className="mt-4 lg:mt-5">
+          <Panel eyebrow="Sentence level" title="Where to be specific">
+            <ul className="grid gap-4 md:grid-cols-2">
+              {result.rewrites.map((w, i) => (
+                <li key={i} className="rounded-3xl bg-bg/40 p-5 ring-1 ring-inset ring-line/10">
+                  <p className="text-[15px] italic text-fg2 line-through decoration-murram-light/60">&ldquo;{w.original}&rdquo;</p>
+                  <p className="mt-3 text-[16px] font-medium leading-snug">{w.suggestion}</p>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-5 text-sm text-fg2">These show a technique. Your teacher writes the real sentence.</p>
+          </Panel>
+        </Reveal>
+      )}
     </div>
   );
 }
