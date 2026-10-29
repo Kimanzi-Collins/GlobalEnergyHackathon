@@ -26,7 +26,7 @@ const ChatRequestSchema = z.object({
 function classifyIntent(message: string): ModuleKey {
   const m = message.toLowerCase();
 
-  // 1. CUE & Scam Detection
+  // 1. CUE & Scam Detection / Money Requests
   if (
     m.includes('scam') ||
     m.includes('agency') ||
@@ -35,7 +35,12 @@ function classifyIntent(message: string): ModuleKey {
     m.includes('cue') ||
     m.includes('legit') ||
     m.includes('fraud') ||
-    m.includes('fake')
+    m.includes('fake') ||
+    m.includes('send you') ||
+    m.includes('m-pesa') ||
+    m.includes('mpesa') ||
+    m.includes('pay you') ||
+    m.includes('shillings')
   ) {
     return 'cue';
   }

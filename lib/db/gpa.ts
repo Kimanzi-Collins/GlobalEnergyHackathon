@@ -122,3 +122,7 @@ export async function insertGpaConversion(params: {
     return `demo-gpa-conv-${Date.now()}`;
   }
 }
+
+export async function getKcseGradeScale(): Promise<KcseGradeBand[]> {
+  return getAllGradeBands();
+}
