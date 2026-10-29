@@ -16,9 +16,9 @@ import {
 } from 'lucide-react';
 import { mockGuideSteps } from '@/lib/fixtures';
 import { GuideStep, GuidePhase, ProgressStatus } from '@/lib/types';
-import { Badge } from '@/components/dashboard/ui/Badge';
-import { Card } from '@/components/dashboard/ui/Card';
-import { Button } from '@/components/dashboard/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { USSD_SERVICE_CODE } from '@/lib/constants';
 
 const phaseLabels: Record<GuidePhase, { title: string; subtitle: string }> = {
@@ -57,34 +57,34 @@ export default function GuidePage() {
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
       {/* 1. Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line/10">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-saffron uppercase tracking-widest mb-1">
+          <div className="flex items-center gap-2 text-xs font-mono text-accent uppercase tracking-widest mb-1">
             <Compass className="w-3.5 h-3.5" />
             <span>Official Roadmap • 12 Steps</span>
           </div>
-          <h1 className="font-fraunces text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-bone">
+          <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-fg">
             Application Guide
           </h1>
-          <p className="text-sm font-display text-bone-muted mt-1 max-w-2xl">
+          <p className="text-sm text-fg2 mt-1 max-w-2xl">
             A comprehensive, scam-free timeline designed for Kenyan KCSE students applying to US universities. Everything can be prepared for free without paying costly commercial agencies.
           </p>
         </div>
 
         {/* Progress Bar Badge */}
-        <div className="bg-ink-surface border border-white/10 rounded-xl p-4 flex items-center gap-4 self-start sm:self-auto min-w-[200px]">
+        <div className="bg-surface ring-1 ring-inset ring-line/10 rounded-2xl p-4 flex items-center gap-4 self-start sm:self-auto min-w-[200px]">
           <div className="w-full space-y-1.5">
             <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-bone font-semibold">Progress</span>
-              <span className="text-saffron font-bold">{progressPercent}%</span>
+              <span className="text-fg font-semibold">Progress</span>
+              <span className="text-accent font-bold">{progressPercent}%</span>
             </div>
-            <div className="w-full h-2 bg-ink rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-bg rounded-full overflow-hidden">
               <div
-                className="h-full bg-saffron transition-all duration-500 rounded-full"
+                className="h-full bg-accent transition-all duration-500 rounded-full"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <span className="text-[10px] font-mono text-bone-muted block text-right">
+            <span className="text-[10px] font-mono text-fg2 block text-right">
               {completedCount} of {totalCount} completed
             </span>
           </div>
@@ -92,9 +92,9 @@ export default function GuidePage() {
       </div>
 
       {/* 2. USSD Offline Tip Banner */}
-      <div className="p-4 rounded-xl bg-screen border border-phosphor/20 text-phosphor flex items-center justify-between">
+      <div className="p-4 rounded-2xl bg-screen ring-1 ring-inset ring-phosphor/20 text-phosphor flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Phone className="w-5 h-5 flex-shrink-0" />
+          <Phone className="w-5 h-5 shrink-0" />
           <p className="text-xs font-mono leading-relaxed">
             Need to browse steps offline on a 2G handset? Dial{' '}
             <strong className="underline">{USSD_SERVICE_CODE}</strong> and select option 1 to read and complete steps via SMS.
@@ -111,11 +111,11 @@ export default function GuidePage() {
 
           return (
             <div key={phaseKey} className="space-y-3">
-              <div className="pb-2 border-b border-white/10">
-                <h2 className="font-editorial text-2xl font-bold text-bone">
+              <div className="pb-2 border-b border-line/10">
+                <h2 className="font-editorial text-2xl font-bold text-fg">
                   {phaseMeta.title}
                 </h2>
-                <p className="text-xs font-display text-bone-muted">{phaseMeta.subtitle}</p>
+                <p className="text-xs text-fg2">{phaseMeta.subtitle}</p>
               </div>
 
               <div className="space-y-3">
@@ -126,10 +126,10 @@ export default function GuidePage() {
                   return (
                     <Card
                       key={step.id}
-                      className={`bg-ink-surface border transition-all ${
+                      className={`bg-surface ring-1 ring-inset transition-all ${
                         isDone
-                          ? 'border-acacia/40 bg-acacia/10'
-                          : 'border-white/10 hover:border-white/20'
+                          ? 'ring-acacia/40 bg-acacia/10'
+                          : 'ring-line/10 hover:ring-line/20'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-4">
@@ -138,24 +138,24 @@ export default function GuidePage() {
                           <button
                             type="button"
                             onClick={() => handleToggleStepStatus(step.id)}
-                            className="mt-0.5 text-bone-muted hover:text-saffron transition-colors"
+                            className="mt-0.5 text-fg2 hover:text-accent transition-colors"
                             title={isDone ? 'Mark as todo' : 'Mark as done'}
                           >
                             {isDone ? (
                               <CheckCircle2 className="w-6 h-6 text-[#8CF2A6]" />
                             ) : (
-                              <Circle className="w-6 h-6 text-white/20 hover:text-white/60" />
+                              <Circle className="w-6 h-6 text-line/20 hover:text-line/60" />
                             )}
                           </button>
 
                           <div className="space-y-1 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-xs font-mono text-saffron font-bold">
+                              <span className="text-xs font-mono text-accent font-bold">
                                 Step {step.order}
                               </span>
                               <h3
-                                className={`text-base font-display font-semibold transition-colors cursor-pointer ${
-                                  isDone ? 'line-through text-bone-muted' : 'text-bone'
+                                className={`text-base font-semibold transition-colors cursor-pointer ${
+                                  isDone ? 'line-through text-fg2' : 'text-fg'
                                 }`}
                                 onClick={() => setExpandedStepId(isExpanded ? '' : step.id)}
                               >
@@ -163,30 +163,30 @@ export default function GuidePage() {
                               </h3>
                             </div>
 
-                            <p className="text-xs font-display text-bone-muted leading-relaxed">
+                            <p className="text-xs text-fg2 leading-relaxed">
                               {step.summary}
                             </p>
                           </div>
                         </div>
 
                         {/* Metadata Chips & Accordion Toggle */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-2 shrink-0">
                           {step.costUsd === 0 ? (
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-acacia/30 text-[#8CF2A6] border border-acacia/40">
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-acacia/30 text-[#8CF2A6] ring-1 ring-inset ring-acacia/40">
                               $0 Free
                             </span>
                           ) : step.costUsd ? (
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-bone-muted border border-white/10">
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-fg/5 text-fg2 ring-1 ring-inset ring-line/10">
                               ${step.costUsd} USD
                             </span>
                           ) : (
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-saffron/10 text-saffron border border-saffron/30">
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-accent/10 text-accent ring-1 ring-inset ring-accent/30">
                               Fee Waiver
                             </span>
                           )}
 
                           {step.estMinutes && (
-                            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono text-bone-muted bg-white/5 px-2 py-0.5 rounded border border-white/10">
+                            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono text-fg2 bg-fg/5 px-2 py-0.5 rounded-full ring-1 ring-inset ring-line/10">
                               <Clock className="w-3 h-3" />
                               {step.estMinutes}m
                             </span>
@@ -195,7 +195,7 @@ export default function GuidePage() {
                           <button
                             type="button"
                             onClick={() => setExpandedStepId(isExpanded ? '' : step.id)}
-                            className="p-1 text-bone-muted hover:text-bone rounded-lg"
+                            className="p-1 text-fg2 hover:text-fg rounded-lg"
                           >
                             {isExpanded ? (
                               <ChevronUp className="w-4 h-4" />
@@ -208,8 +208,8 @@ export default function GuidePage() {
 
                       {/* Expanded Step Body */}
                       {isExpanded && (
-                        <div className="mt-4 pt-4 border-t border-white/5 space-y-3 animate-fade-in">
-                          <div className="text-xs font-display text-bone leading-relaxed whitespace-pre-line bg-ink/50 p-4 rounded-xl border border-white/5">
+                        <div className="mt-4 pt-4 border-t border-line/10 space-y-3 animate-fade-in">
+                          <div className="text-xs text-fg leading-relaxed whitespace-pre-line bg-bg/50 p-4 rounded-2xl ring-1 ring-inset ring-line/10">
                             {step.bodyMd}
                           </div>
 
@@ -219,13 +219,13 @@ export default function GuidePage() {
                                 href={step.externalUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-xs font-mono text-saffron hover:underline"
+                                className="inline-flex items-center gap-1.5 text-xs font-mono text-accent hover:underline"
                               >
                                 Official Resource Link <ExternalLink className="w-3.5 h-3.5" />
                               </a>
                             )}
 
-                            <span className="text-[10px] font-mono text-bone-muted">
+                            <span className="text-[10px] font-mono text-fg2">
                               USSD shortcut: {USSD_SERVICE_CODE} &gt; 1 &gt; {step.ussdCode}
                             </span>
                           </div>
@@ -242,4 +242,3 @@ export default function GuidePage() {
     </div>
   );
 }
-

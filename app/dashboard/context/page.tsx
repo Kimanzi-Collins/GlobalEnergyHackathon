@@ -18,10 +18,10 @@ import {
 import { useStudentSession } from '@/lib/session-context';
 import { mockStudentFacts } from '@/lib/fixtures';
 import { StudentFact, Activity } from '@/lib/types';
-import { Badge } from '@/components/dashboard/ui/Badge';
-import { Card } from '@/components/dashboard/ui/Card';
-import { Button } from '@/components/dashboard/ui/Button';
-import { Input } from '@/components/dashboard/ui/Input';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function StudentContextPage() {
   const { student, phoneNumber, updateProfile } = useStudentSession();
@@ -131,16 +131,16 @@ export default function StudentContextPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
       {/* 1. Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line/10">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-saffron uppercase tracking-widest mb-1">
+          <div className="flex items-center gap-2 text-xs font-mono text-accent uppercase tracking-widest mb-1">
             <UserCheck className="w-3.5 h-3.5" />
             <span>Student Context &amp; Privacy Transparency</span>
           </div>
-          <h1 className="font-fraunces text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-bone">
+          <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-fg">
             Identity &amp; Context
           </h1>
-          <p className="text-sm font-display text-bone-muted mt-1 max-w-2xl">
+          <p className="text-sm text-fg2 mt-1 max-w-2xl">
             Review and edit the personal facts Pepea uses across USSD, SMS, WhatsApp, and Web. You maintain full ownership and can delete any inferred fact.
           </p>
         </div>
@@ -148,7 +148,7 @@ export default function StudentContextPage() {
         {/* Gemini Disclosure Modal Toggle */}
         <button
           onClick={() => setShowGeminiJson(!showGeminiJson)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-saffron/40 bg-saffron/10 text-saffron text-xs font-mono hover:bg-saffron/20 transition-colors self-start sm:self-auto"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-accent/40 bg-accent/10 text-accent text-xs font-mono hover:bg-accent/20 transition-colors self-start sm:self-auto"
         >
           <Eye className="w-4 h-4" />
           <span>{showGeminiJson ? 'Hide Gemini Payload' : 'What Gemini Sees'}</span>
@@ -157,7 +157,7 @@ export default function StudentContextPage() {
 
       {/* 2. Transparent "What Gemini Sees" Disclosure Box */}
       {showGeminiJson && (
-        <Card className="bg-screen border-phosphor/30 text-phosphor font-mono space-y-3">
+        <Card className="bg-screen ring-1 ring-inset ring-phosphor/30 text-phosphor font-mono space-y-3">
           <div className="flex items-center justify-between border-b border-phosphor/20 pb-2">
             <span className="text-xs uppercase tracking-wider text-phosphor font-bold flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
@@ -165,7 +165,7 @@ export default function StudentContextPage() {
             </span>
             <span className="text-[10px] text-phosphor/60">Read-only system view</span>
           </div>
-          <pre className="text-xs overflow-x-auto p-2 bg-black/40 rounded-lg max-h-72 leading-relaxed">
+          <pre className="text-xs overflow-x-auto p-2 bg-black/40 rounded-xl max-h-72 leading-relaxed">
             {JSON.stringify(geminiInjectedContext, null, 2)}
           </pre>
           <p className="text-[11px] text-phosphor/70 pt-1">
@@ -177,15 +177,15 @@ export default function StudentContextPage() {
       {/* 3. Main Form Grid */}
       <form onSubmit={handleSaveProfile} className="space-y-8">
         {/* Core Profile Card */}
-        <Card className="bg-ink-surface border-white/10 space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-white/10">
+        <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-line/10">
             <div>
-              <h2 className="font-editorial text-2xl font-bold text-bone">Academic &amp; School Profile</h2>
-              <p className="text-xs font-display text-bone-muted">
+              <h2 className="font-editorial text-2xl font-bold text-fg">Academic &amp; School Profile</h2>
+              <p className="text-xs text-fg2">
                 Your high school records and test scores used for university recommendations.
               </p>
             </div>
-            <span className="text-xs font-mono text-phosphor bg-screen px-2.5 py-1 rounded border border-phosphor/30">
+            <span className="text-xs font-mono text-phosphor bg-screen px-2.5 py-1 rounded-full ring-1 ring-inset ring-phosphor/30">
               {phoneNumber}
             </span>
           </div>
@@ -214,14 +214,14 @@ export default function StudentContextPage() {
             />
 
             <div>
-              <label className="block text-xs font-mono font-medium tracking-wider text-bone-muted uppercase mb-1.5">
+              <label className="block text-xs font-mono font-medium tracking-wider text-fg2 uppercase mb-1.5">
                 School Type
               </label>
               <select
                 name="schoolType"
                 value={formData.schoolType}
                 onChange={handleChange}
-                className="w-full bg-ink-surface border border-white/10 rounded-lg px-4 py-3 text-bone font-display focus:outline-none focus:ring-1 focus:ring-saffron"
+                className="w-full bg-surface border border-line/15 rounded-xl px-4 py-2.5 text-fg text-sm focus:outline-none focus:ring-1 focus:ring-accent"
               >
                 <option value="national">National High School</option>
                 <option value="extra_county">Extra-County School</option>
@@ -260,14 +260,14 @@ export default function StudentContextPage() {
             />
 
             <div>
-              <label className="block text-xs font-mono font-medium tracking-wider text-bone-muted uppercase mb-1.5">
+              <label className="block text-xs font-mono font-medium tracking-wider text-fg2 uppercase mb-1.5">
                 Estimated Family Income Band
               </label>
               <select
                 name="familyIncomeBand"
                 value={formData.familyIncomeBand}
                 onChange={handleChange}
-                className="w-full bg-ink-surface border border-white/10 rounded-lg px-4 py-3 text-bone font-display focus:outline-none focus:ring-1 focus:ring-saffron"
+                className="w-full bg-surface border border-line/15 rounded-xl px-4 py-2.5 text-fg text-sm focus:outline-none focus:ring-1 focus:ring-accent"
               >
                 <option value="under_5k">Under $5,000 / year (Full Aid Eligible)</option>
                 <option value="5k_20k">$5,000 – $20,000 / year</option>
@@ -284,9 +284,9 @@ export default function StudentContextPage() {
                 name="needsFullAid"
                 checked={formData.needsFullAid}
                 onChange={handleChange}
-                className="w-4 h-4 rounded border-white/20 bg-ink accent-saffron"
+                className="w-4 h-4 rounded border-line/20 bg-bg accent-accent"
               />
-              <span className="text-sm font-display text-bone">
+              <span className="text-sm text-fg">
                 I require 100% full demonstrated financial aid to attend a US university (Tuition + Room &amp; Board).
               </span>
             </label>
@@ -294,13 +294,13 @@ export default function StudentContextPage() {
         </Card>
 
         {/* Extracurricular Activities Card */}
-        <Card className="bg-ink-surface border-white/10 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-line/10">
             <div>
-              <h2 className="font-editorial text-2xl font-bold text-bone">
+              <h2 className="font-editorial text-2xl font-bold text-fg">
                 Activities &amp; Leadership (Common App List)
               </h2>
-              <p className="text-xs font-display text-bone-muted">
+              <p className="text-xs text-fg2">
                 Add science projects, family commitments, tutoring, or community initiatives.
               </p>
             </div>
@@ -319,12 +319,12 @@ export default function StudentContextPage() {
             {activities.map((act, idx) => (
               <div
                 key={idx}
-                className="p-4 rounded-xl bg-ink/50 border border-white/5 space-y-3 relative group"
+                className="p-4 rounded-2xl bg-bg/50 ring-1 ring-inset ring-line/10 space-y-3 relative group"
               >
                 <button
                   type="button"
                   onClick={() => handleDeleteActivity(idx)}
-                  className="absolute top-4 right-4 text-bone-muted hover:text-murram-light transition-colors"
+                  className="absolute top-4 right-4 text-fg2 hover:text-murram-light transition-colors"
                   title="Remove activity"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -350,14 +350,14 @@ export default function StudentContextPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-medium tracking-wider text-bone-muted uppercase mb-1">
+                  <label className="block text-xs font-mono font-medium tracking-wider text-fg2 uppercase mb-1">
                     Impact &amp; Accomplishments (Max 150 chars for Common App)
                   </label>
                   <input
                     type="text"
                     value={act.summary || ''}
                     onChange={(e) => handleUpdateActivity(idx, { summary: e.target.value })}
-                    className="w-full bg-ink-surface border border-white/10 rounded-lg px-3 py-2 text-xs font-display text-bone"
+                    className="w-full bg-surface border border-line/15 rounded-xl px-3 py-2 text-xs text-fg focus:outline-none focus:ring-1 focus:ring-accent"
                   />
                 </div>
               </div>
@@ -366,37 +366,37 @@ export default function StudentContextPage() {
         </Card>
 
         {/* Inferred Context Facts Card (With Delete) */}
-        <Card className="bg-ink-surface border-white/10 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-line/10">
             <div>
-              <h2 className="font-editorial text-2xl font-bold text-bone">
+              <h2 className="font-editorial text-2xl font-bold text-fg">
                 Inferred Admissions Facts
               </h2>
-              <p className="text-xs font-display text-bone-muted">
+              <p className="text-xs text-fg2">
                 Facts extracted from your statements and WhatsApp chats. Delete any inaccurate item.
               </p>
             </div>
-            <Badge variant="indicative">{facts.length} Verified Facts</Badge>
+            <Badge kind="indicative">{facts.length} Verified Facts</Badge>
           </div>
 
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-line/10">
             {facts.map((fact) => (
               <div key={fact.key} className="py-3 flex items-start justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-semibold text-saffron uppercase">
+                    <span className="text-xs font-mono font-semibold text-accent uppercase">
                       {fact.key.replace(/_/g, ' ')}
                     </span>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/5 text-bone-muted">
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-fg/5 text-fg2">
                       Source: {fact.source}
                     </span>
                   </div>
-                  <p className="text-sm font-display text-bone leading-relaxed">{fact.value}</p>
+                  <p className="text-sm text-fg leading-relaxed">{fact.value}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleDeleteFact(fact.key)}
-                  className="p-1.5 text-bone-muted hover:text-murram-light hover:bg-white/5 rounded-lg transition-colors flex-shrink-0"
+                  className="p-1.5 text-fg2 hover:text-murram-light hover:bg-fg/5 rounded-lg transition-colors shrink-0"
                   title="Delete fact"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -407,14 +407,14 @@ export default function StudentContextPage() {
         </Card>
 
         {/* Save Bar */}
-        <div className="sticky bottom-6 p-4 rounded-2xl bg-ink-elevated border border-white/20 shadow-2xl flex items-center justify-between">
-          <p className="text-xs font-mono text-bone-muted">
+        <div className="sticky bottom-6 p-4 rounded-2xl bg-surface ring-1 ring-inset ring-line/20 shadow-2xl flex items-center justify-between">
+          <p className="text-xs font-mono text-fg2">
             All updates sync automatically to your E.164 phone profile.
           </p>
           <Button type="submit" variant="primary" size="md">
             {saveSuccess ? (
               <>
-                <Check className="w-4 h-4 mr-1 text-ink" /> Profile Updated
+                <Check className="w-4 h-4 mr-1 text-accent-fg" /> Profile Updated
               </>
             ) : (
               <>
@@ -427,4 +427,3 @@ export default function StudentContextPage() {
     </div>
   );
 }
-

@@ -12,10 +12,10 @@ import {
 } from 'lucide-react';
 import { mockSampleLorResult } from '@/lib/fixtures';
 import { LorReviewResult } from '@/lib/types';
-import { Card } from '@/components/dashboard/ui/Card';
-import { Button } from '@/components/dashboard/ui/Button';
-import { Textarea } from '@/components/dashboard/ui/Textarea';
-import { Input } from '@/components/dashboard/ui/Input';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 
 export default function LorReviewPage() {
   const [recommenderName, setRecommenderName] = useState('Mwalimu John Mwangi');
@@ -37,16 +37,16 @@ export default function LorReviewPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line/10">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-saffron uppercase tracking-widest mb-1">
+          <div className="flex items-center gap-2 text-xs font-mono text-accent uppercase tracking-widest mb-1">
             <MailCheck className="w-3.5 h-3.5" />
             <span>Teacher Recommendation Analysis • Gemini 2.5</span>
           </div>
-          <h1 className="font-fraunces text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-bone">
+          <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-fg">
             Teacher LOR Review
           </h1>
-          <p className="text-sm font-display text-bone-muted mt-1 max-w-2xl">
+          <p className="text-sm text-fg2 mt-1 max-w-2xl">
             Evaluate teacher recommendation drafts against US holistic standards. Pepea never ghostwrites letters; it helps teachers highlight concrete classroom anecdotes and explain the Kenyan grading curve.
           </p>
         </div>
@@ -55,8 +55,8 @@ export default function LorReviewPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Recommender details and draft letter */}
         <div className="lg:col-span-7 space-y-4">
-          <Card className="bg-ink-surface border-white/10 space-y-4">
-            <h3 className="font-editorial text-xl font-bold text-bone">
+          <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-4">
+            <h3 className="font-editorial text-xl font-bold text-fg">
               Recommender Information
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -83,7 +83,7 @@ export default function LorReviewPage() {
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <span className="text-xs font-mono text-bone-muted">
+              <span className="text-xs font-mono text-fg2">
                 Evaluates 4 axes: Specificity, Endorsement, Tone, Context.
               </span>
               <Button
@@ -104,21 +104,21 @@ export default function LorReviewPage() {
         {/* Right Column: 4-Axis Rubric Score & Actionable Gaps */}
         <div className="lg:col-span-5 space-y-4">
           {result && (
-            <Card className="bg-ink-surface border-white/10 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-line/10">
                 <div>
-                  <span className="text-[11px] font-mono uppercase text-bone-muted tracking-wider">
+                  <span className="text-[11px] font-mono uppercase text-fg2 tracking-wider">
                     Assessment
                   </span>
-                  <h4 className="font-editorial text-2xl font-bold text-bone">
+                  <h4 className="font-editorial text-2xl font-bold text-fg">
                     {result.verdict}
                   </h4>
                 </div>
                 <div className="text-right">
-                  <span className="text-3xl font-fraunces font-bold text-saffron">
+                  <span className="text-3xl font-editorial font-bold text-accent">
                     {result.overallScore}
                   </span>
-                  <span className="text-xs font-mono text-bone-muted block">/ 100</span>
+                  <span className="text-xs font-mono text-fg2 block">/ 100</span>
                 </div>
               </div>
 
@@ -131,13 +131,13 @@ export default function LorReviewPage() {
                   { key: 'context', label: 'Kenyan Classroom Context', score: result.rubricScores.context, max: 25 },
                 ].map((item) => (
                   <div key={item.key} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs font-display">
-                      <span className="text-bone">{item.label}</span>
-                      <span className="font-mono text-saffron">{item.score}/{item.max}</span>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-fg">{item.label}</span>
+                      <span className="font-mono text-accent">{item.score}/{item.max}</span>
                     </div>
-                    <div className="w-full h-1.5 bg-ink rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-bg rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-saffron rounded-full"
+                        className="h-full bg-accent rounded-full"
                         style={{ width: `${(item.score / item.max) * 100}%` }}
                       />
                     </div>
@@ -146,11 +146,11 @@ export default function LorReviewPage() {
               </div>
 
               {/* What to Add About Kenya */}
-              <div className="p-3.5 rounded-xl bg-acacia/20 border border-acacia space-y-2 text-xs font-display">
+              <div className="p-3.5 rounded-2xl bg-acacia/20 ring-1 ring-inset ring-acacia/50 space-y-2 text-xs">
                 <span className="font-mono text-[#8CF2A6] font-bold text-[10px] uppercase block">
                   What Mwalimu Should Add About Kenya:
                 </span>
-                <ul className="list-disc list-inside space-y-1 text-bone">
+                <ul className="list-disc list-inside space-y-1 text-fg">
                   {result.kenyaContextToAdd.map((gap, i) => (
                     <li key={i}>{gap}</li>
                   ))}
@@ -158,11 +158,11 @@ export default function LorReviewPage() {
               </div>
 
               {/* Gaps to Address */}
-              <div className="p-3.5 rounded-xl bg-ink/70 border border-white/5 space-y-1.5 text-xs font-display">
-                <span className="font-mono text-saffron font-bold text-[10px] uppercase block">
+              <div className="p-3.5 rounded-2xl bg-bg/70 ring-1 ring-inset ring-line/10 space-y-1.5 text-xs">
+                <span className="font-mono text-accent font-bold text-[10px] uppercase block">
                   Missing Evidence Gaps:
                 </span>
-                <ul className="list-disc list-inside space-y-1 text-bone-muted">
+                <ul className="list-disc list-inside space-y-1 text-fg2">
                   {result.gaps.map((g, i) => (
                     <li key={i}>{g}</li>
                   ))}

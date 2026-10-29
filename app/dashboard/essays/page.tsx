@@ -29,10 +29,10 @@ import {
   EssayReviewResult,
   SchoolEssayPrompt,
 } from '@/lib/types';
-import { Badge } from '@/components/dashboard/ui/Badge';
-import { Card } from '@/components/dashboard/ui/Card';
-import { Button } from '@/components/dashboard/ui/Button';
-import { Textarea } from '@/components/dashboard/ui/Textarea';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function EssaysStudioPage() {
   const { student } = useStudentSession();
@@ -86,7 +86,6 @@ export default function EssaysStudioPage() {
   // Trigger Gemini Roast Review
   const handleRunReview = async () => {
     setIsReviewing(true);
-    // Simulate AI committee scoring with brief authentic feedback transition
     setTimeout(() => {
       setReviewResult({
         ...mockSampleReviewResult,
@@ -99,29 +98,29 @@ export default function EssaysStudioPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
       {/* 1. Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line/10">
         <div>
-          <div className="flex items-center gap-2 text-xs font-mono text-saffron uppercase tracking-widest mb-1">
+          <div className="flex items-center gap-2 text-xs font-mono text-accent uppercase tracking-widest mb-1">
             <FileEdit className="w-3.5 h-3.5" />
             <span>Admissions Officer Roast Studio • Gemini 2.5 Flash</span>
           </div>
-          <h1 className="font-fraunces text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-bone">
+          <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-fg">
             Essays Studio
           </h1>
-          <p className="text-sm font-display text-bone-muted mt-1 max-w-2xl">
+          <p className="text-sm text-fg2 mt-1 max-w-2xl">
             Pick your prompt, draft with live word bounds, and receive tough Ivy League admissions committee feedback. Pepea diagnoses generic <em>Insha</em> style and highlights missing Kenyan context.
           </p>
         </div>
 
         {/* Persona Selector */}
-        <div className="flex items-center gap-2 p-1 bg-ink-surface border border-white/10 rounded-xl self-start sm:self-auto">
+        <div className="flex items-center gap-2 p-1 bg-surface ring-1 ring-inset ring-line/15 rounded-2xl self-start sm:self-auto">
           <button
             type="button"
             onClick={() => setPersona('ivy_committee_chair')}
-            className={`px-3 py-1.5 text-xs font-mono rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs font-mono rounded-xl transition-colors ${
               persona === 'ivy_committee_chair'
-                ? 'bg-saffron text-ink font-bold'
-                : 'text-bone-muted hover:text-bone'
+                ? 'bg-accent text-accent-fg font-bold'
+                : 'text-fg2 hover:text-fg'
             }`}
           >
             Ivy AO Chair
@@ -129,10 +128,10 @@ export default function EssaysStudioPage() {
           <button
             type="button"
             onClick={() => setPersona('kensap_mentor')}
-            className={`px-3 py-1.5 text-xs font-mono rounded-lg transition-colors ${
+            className={`px-3 py-1.5 text-xs font-mono rounded-xl transition-colors ${
               persona === 'kensap_mentor'
-                ? 'bg-saffron text-ink font-bold'
-                : 'text-bone-muted hover:text-bone'
+                ? 'bg-accent text-accent-fg font-bold'
+                : 'text-fg2 hover:text-fg'
             }`}
           >
             Kenyan Mentor
@@ -143,14 +142,14 @@ export default function EssaysStudioPage() {
       {/* 2. Step 1: Essay Type Selector */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-mono uppercase tracking-wider text-bone-muted flex items-center gap-1.5">
-            <span className="w-5 h-5 rounded-full bg-saffron text-ink font-bold inline-flex items-center justify-center text-[10px]">
+          <label className="text-xs font-mono uppercase tracking-wider text-fg2 flex items-center gap-1.5">
+            <span className="w-5 h-5 rounded-full bg-accent text-accent-fg font-bold inline-flex items-center justify-center text-[10px]">
               1
             </span>
             <span>Choose Essay Type:</span>
           </label>
-          <span className="text-xs font-mono text-bone-muted">
-            Scope: <span className="text-saffron capitalize">{currentTypeObj.scope.replace('_', ' ')}</span>
+          <span className="text-xs font-mono text-fg2">
+            Scope: <span className="text-accent capitalize">{currentTypeObj.scope.replace('_', ' ')}</span>
           </span>
         </div>
 
@@ -165,27 +164,27 @@ export default function EssaysStudioPage() {
                   setSelectedType(t.code);
                   setSelectedPromptId('');
                 }}
-                className={`p-3 rounded-xl border text-left transition-all ${
+                className={`p-3 rounded-2xl border text-left transition-all ${
                   isSelected
-                    ? 'bg-saffron/15 border-saffron text-bone shadow-md'
-                    : 'bg-ink-surface border-white/10 text-bone-muted hover:border-white/30 hover:text-bone'
+                    ? 'bg-accent/15 border-accent text-fg shadow-md'
+                    : 'bg-surface border-line/10 text-fg2 hover:border-line/30 hover:text-fg'
                 }`}
               >
                 <div className="flex items-center justify-between text-[10px] font-mono mb-1">
                   <span
-                    className={`px-1.5 py-0.5 rounded uppercase ${
+                    className={`px-1.5 py-0.5 rounded-full uppercase ${
                       t.scope === 'common'
                         ? 'bg-acacia/40 text-[#8CF2A6]'
                         : t.scope === 'school_specific'
                         ? 'bg-murram/30 text-murram-light'
-                        : 'bg-white/10 text-bone-muted'
+                        : 'bg-fg/5 text-fg2'
                     }`}
                   >
                     {t.scope.replace('_', ' ')}
                   </span>
                   <span>{t.defaultWordLimit}w</span>
                 </div>
-                <p className="text-xs font-display font-semibold line-clamp-1 text-bone">
+                <p className="text-xs font-semibold line-clamp-1 text-fg">
                   {t.label}
                 </p>
               </button>
@@ -196,9 +195,9 @@ export default function EssaysStudioPage() {
 
       {/* 3. Step 2 (Mandatory if school-specific): School & Prompt Pickers */}
       {isSchoolSpecific && (
-        <Card className="bg-ink-surface border-white/10 space-y-4">
-          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-bone-muted">
-            <span className="w-5 h-5 rounded-full bg-saffron text-ink font-bold inline-flex items-center justify-center text-[10px]">
+        <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-4">
+          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-fg2">
+            <span className="w-5 h-5 rounded-full bg-accent text-accent-fg font-bold inline-flex items-center justify-center text-[10px]">
               2
             </span>
             <span>Select University &amp; School Prompt:</span>
@@ -207,7 +206,7 @@ export default function EssaysStudioPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* School Selector */}
             <div>
-              <label className="block text-xs font-mono text-bone-muted uppercase mb-1.5">
+              <label className="block text-xs font-mono text-fg2 uppercase mb-1.5">
                 Target University:
               </label>
               <select
@@ -216,7 +215,7 @@ export default function EssaysStudioPage() {
                   setSelectedUniversityId(e.target.value);
                   setSelectedPromptId('');
                 }}
-                className="w-full bg-ink border border-white/20 rounded-lg px-4 py-2.5 text-bone text-sm font-display focus:outline-none focus:ring-1 focus:ring-saffron"
+                className="w-full bg-bg border border-line/15 rounded-xl px-4 py-2.5 text-fg text-sm focus:outline-none focus:ring-1 focus:ring-accent"
               >
                 <option value="">-- Select School --</option>
                 {mockUniversities.map((u) => (
@@ -229,14 +228,14 @@ export default function EssaysStudioPage() {
 
             {/* Prompt Selector */}
             <div>
-              <label className="block text-xs font-mono text-bone-muted uppercase mb-1.5">
+              <label className="block text-xs font-mono text-fg2 uppercase mb-1.5">
                 Specific Supplemental Prompt:
               </label>
               <select
                 value={selectedPromptId}
                 onChange={(e) => setSelectedPromptId(e.target.value)}
                 disabled={!selectedUniversityId}
-                className="w-full bg-ink border border-white/20 rounded-lg px-4 py-2.5 text-bone text-sm font-display focus:outline-none focus:ring-1 focus:ring-saffron disabled:opacity-40"
+                className="w-full bg-bg border border-line/15 rounded-xl px-4 py-2.5 text-fg text-sm focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-40"
               >
                 <option value="">
                   {selectedUniversityId ? '-- Choose School Prompt --' : '-- First Select a University --'}
@@ -251,10 +250,10 @@ export default function EssaysStudioPage() {
           </div>
 
           {activePrompt && (
-            <div className="p-3 rounded-lg bg-ink/70 border border-saffron/30 text-xs font-display space-y-1">
-              <span className="text-[11px] font-mono text-saffron uppercase font-bold">Official Prompt Text:</span>
-              <p className="text-bone italic">&ldquo;{activePrompt.promptText}&rdquo;</p>
-              <span className="text-[10px] font-mono text-bone-muted block pt-1">
+            <div className="p-3.5 rounded-2xl bg-bg/70 ring-1 ring-inset ring-accent/30 text-xs space-y-1">
+              <span className="text-[11px] font-mono text-accent uppercase font-bold">Official Prompt Text:</span>
+              <p className="text-fg italic">&ldquo;{activePrompt.promptText}&rdquo;</p>
+              <span className="text-[10px] font-mono text-fg2 block pt-1">
                 Word Limit: {activePrompt.wordLimit} words • Cycle: {activePrompt.admissionCycle}
               </span>
             </div>
@@ -266,13 +265,13 @@ export default function EssaysStudioPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column (7 cols): Draft Editor */}
         <div className="lg:col-span-7 space-y-4">
-          <Card className="bg-ink-surface border-white/10 relative">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+          <Card className="bg-surface ring-1 ring-inset ring-line/10 relative">
+            <div className="flex items-center justify-between pb-3 border-b border-line/10">
               <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-saffron text-ink font-bold inline-flex items-center justify-center text-[10px]">
+                <span className="w-5 h-5 rounded-full bg-accent text-accent-fg font-bold inline-flex items-center justify-center text-[10px]">
                   3
                 </span>
-                <h3 className="font-editorial text-xl font-bold text-bone">
+                <h3 className="font-editorial text-xl font-bold text-fg">
                   Drafting Canvas
                 </h3>
               </div>
@@ -284,8 +283,8 @@ export default function EssaysStudioPage() {
                     isOverLimit
                       ? 'text-murram-light font-bold'
                       : isNearLimit
-                      ? 'text-saffron'
-                      : 'text-bone-muted'
+                      ? 'text-accent'
+                      : 'text-fg2'
                   }`}
                 >
                   {wordCount} / {activeWordLimit} words
@@ -296,14 +295,14 @@ export default function EssaysStudioPage() {
 
             {/* Lock Guard for School-Specific Types */}
             {!isEditorUnlocked ? (
-              <div className="py-16 text-center space-y-3 bg-ink/40 rounded-xl border border-dashed border-white/10 p-6 my-4">
-                <div className="w-12 h-12 rounded-full bg-murram/20 border border-murram/40 flex items-center justify-center mx-auto text-murram-light">
+              <div className="py-16 text-center space-y-3 bg-bg/40 rounded-2xl border border-dashed border-line/15 p-6 my-4">
+                <div className="w-12 h-12 rounded-full bg-murram/20 ring-1 ring-inset ring-murram/40 flex items-center justify-center mx-auto text-murram-light">
                   <Lock className="w-6 h-6" />
                 </div>
-                <h4 className="font-editorial text-lg font-bold text-bone">
+                <h4 className="font-editorial text-lg font-bold text-fg">
                   Prompt Selection Required
                 </h4>
-                <p className="text-xs font-display text-bone-muted max-w-md mx-auto">
+                <p className="text-xs text-fg2 max-w-md mx-auto">
                   This is a school-specific essay type ({currentTypeObj.label}). To prevent generic drafting, you must select your target university and exact prompt above before the editor unlocks.
                 </p>
               </div>
@@ -318,7 +317,7 @@ export default function EssaysStudioPage() {
                 />
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-                  <span className="text-xs font-mono text-bone-muted">
+                  <span className="text-xs font-mono text-fg2">
                     Autosaved to local memory
                   </span>
                   <Button
@@ -341,28 +340,28 @@ export default function EssaysStudioPage() {
         {/* Right Column (5 cols): Rubric & Roast Results */}
         <div className="lg:col-span-5 space-y-4">
           {reviewResult ? (
-            <Card className="bg-ink-surface border-white/10 space-y-5">
+            <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-5">
               {/* Committee Verdict & Overall Score */}
-              <div className="flex items-center justify-between pb-4 border-b border-white/10">
+              <div className="flex items-center justify-between pb-4 border-b border-line/10">
                 <div>
-                  <span className="text-[11px] font-mono uppercase text-bone-muted tracking-wider">
+                  <span className="text-[11px] font-mono uppercase text-fg2 tracking-wider">
                     Committee Verdict
                   </span>
-                  <h4 className="font-editorial text-2xl font-bold text-bone">
+                  <h4 className="font-editorial text-2xl font-bold text-fg">
                     {reviewResult.verdict}
                   </h4>
                 </div>
                 <div className="text-right">
-                  <span className="text-3xl font-fraunces font-bold text-saffron">
+                  <span className="text-3xl font-editorial font-bold text-accent">
                     {reviewResult.overallScore}
                   </span>
-                  <span className="text-xs font-mono text-bone-muted block">/ 100 pts</span>
+                  <span className="text-xs font-mono text-fg2 block">/ 100 pts</span>
                 </div>
               </div>
 
               {/* Rubric Score Bars */}
               <div className="space-y-3">
-                <p className="text-xs font-mono uppercase text-bone-muted tracking-wider">
+                <p className="text-xs font-mono uppercase text-fg2 tracking-wider">
                   Rubric Breakdown ({currentTypeObj.label}):
                 </p>
                 {currentTypeObj.rubric.map((r) => {
@@ -370,15 +369,15 @@ export default function EssaysStudioPage() {
                   const percent = Math.round((score / r.max) * 100);
                   return (
                     <div key={r.key} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs font-display">
-                        <span className="text-bone">{r.label}</span>
-                        <span className="font-mono text-saffron">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-fg">{r.label}</span>
+                        <span className="font-mono text-accent">
                           {score}/{r.max}
                         </span>
                       </div>
-                      <div className="w-full h-1.5 bg-ink rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-bg rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-saffron transition-all duration-500 rounded-full"
+                          className="h-full bg-accent transition-all duration-500 rounded-full"
                           style={{ width: `${percent}%` }}
                         />
                       </div>
@@ -388,11 +387,11 @@ export default function EssaysStudioPage() {
               </div>
 
               {/* Committee Summary */}
-              <div className="p-3.5 rounded-xl bg-ink/70 border border-white/5 space-y-1.5 text-xs font-display">
-                <span className="font-mono text-saffron font-semibold uppercase text-[10px] block">
+              <div className="p-3.5 rounded-2xl bg-bg/70 ring-1 ring-inset ring-line/10 space-y-1.5 text-xs">
+                <span className="font-mono text-accent font-semibold uppercase text-[10px] block">
                   Admissions Chair Note:
                 </span>
-                <p className="text-bone leading-relaxed">{reviewResult.committeeSummary}</p>
+                <p className="text-fg leading-relaxed">{reviewResult.committeeSummary}</p>
               </div>
 
               {/* Line Edits & Insha Warning */}
@@ -402,10 +401,10 @@ export default function EssaysStudioPage() {
                     Insha Register vs US Voice:
                   </span>
                   {reviewResult.lineEdits.map((item, idx) => (
-                    <div key={idx} className="p-3 rounded-lg bg-murram/10 border border-murram/30 text-xs font-display space-y-1">
-                      <p className="line-through text-bone-muted italic">&ldquo;{item.original}&rdquo;</p>
-                      <p className="text-bone font-medium">{item.suggestion}</p>
-                      <p className="text-[11px] text-bone-muted pt-0.5">{item.issue}</p>
+                    <div key={idx} className="p-3 rounded-xl bg-murram/10 ring-1 ring-inset ring-murram/30 text-xs space-y-1">
+                      <p className="line-through text-fg2 italic">&ldquo;{item.original}&rdquo;</p>
+                      <p className="text-fg font-medium">{item.suggestion}</p>
+                      <p className="text-[11px] text-fg2 pt-0.5">{item.issue}</p>
                     </div>
                   ))}
                 </div>
@@ -413,11 +412,11 @@ export default function EssaysStudioPage() {
 
               {/* Missing Kenyan Context Gaps */}
               {reviewResult.kenyanContextTips && reviewResult.kenyanContextTips.trim().length > 0 && (
-                <div className="p-3 rounded-lg bg-acacia/20 border border-acacia text-xs font-display space-y-1">
+                <div className="p-3 rounded-xl bg-acacia/20 ring-1 ring-inset ring-acacia/50 text-xs space-y-1">
                   <span className="font-mono text-[#8CF2A6] font-semibold text-[10px] uppercase block">
                     Kenyan Context to Clarify:
                   </span>
-                  <ul className="list-disc list-inside space-y-1 text-bone">
+                  <ul className="list-disc list-inside space-y-1 text-fg">
                     {reviewResult.kenyanContextTips.split('\n').filter(Boolean).map((gap, i) => (
                       <li key={i}>{gap}</li>
                     ))}
@@ -426,12 +425,12 @@ export default function EssaysStudioPage() {
               )}
             </Card>
           ) : (
-            <Card className="bg-ink-surface border-white/10 text-center py-16 space-y-3">
-              <Sparkles className="w-8 h-8 text-saffron mx-auto opacity-40" />
-              <h4 className="font-editorial text-lg font-bold text-bone">
+            <Card className="bg-surface ring-1 ring-inset ring-line/10 text-center py-16 space-y-3">
+              <Sparkles className="w-8 h-8 text-accent mx-auto opacity-40" />
+              <h4 className="font-editorial text-lg font-bold text-fg">
                 No Active Review
               </h4>
-              <p className="text-xs font-display text-bone-muted max-w-xs mx-auto">
+              <p className="text-xs text-fg2 max-w-xs mx-auto">
                 Type or paste your draft on the left and click &ldquo;Roast with Gemini 2.5&rdquo; to evaluate rubric strengths and word economy.
               </p>
             </Card>
@@ -441,4 +440,3 @@ export default function EssaysStudioPage() {
     </div>
   );
 }
-

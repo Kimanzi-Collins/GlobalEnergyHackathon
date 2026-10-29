@@ -83,8 +83,8 @@ export function Nav() {
           ))}
         </ul>
 
-        <Button href="#phone" size="md" className="h-8 px-4 text-[13px]">
-          Try it
+        <Button href="/dashboard" size="md" className="h-8 px-4 text-[13px]">
+          Dashboard
         </Button>
       </nav>
     </header>

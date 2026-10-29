@@ -15,9 +15,9 @@ import {
 } from 'lucide-react';
 import { useStudentSession } from '@/lib/session-context';
 import { mockGradeBands } from '@/lib/fixtures';
-import { Badge } from '@/components/dashboard/ui/Badge';
-import { Card } from '@/components/dashboard/ui/Card';
-import { Button } from '@/components/dashboard/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { USSD_SERVICE_CODE } from '@/lib/constants';
 
 export default function GpaConverterPage() {
@@ -87,23 +87,23 @@ export default function GpaConverterPage() {
     <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
       {/* 1. Header & Context */}
       <div>
-        <div className="flex items-center gap-2 text-xs font-mono text-saffron uppercase tracking-widest mb-1">
+        <div className="flex items-center gap-2 text-xs font-mono text-accent uppercase tracking-widest mb-1">
           <Calculator className="w-3.5 h-3.5" />
           <span>Evaluation Heuristic • PEPEA_HEURISTIC_V1</span>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="font-fraunces text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-bone">
+            <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-fg">
               KCSE to US 4.0 GPA
             </h1>
-            <p className="text-sm font-display text-bone-muted mt-1 max-w-2xl">
+            <p className="text-sm text-fg2 mt-1 max-w-2xl">
               Convert Kenyan 84-point secondary marks to the US 4.0 grading scale.
-              Every result is explicitly marked <Badge variant="indicative" className="ml-1 text-[11px]">Indicative</Badge> to meet US admissions integrity standards.
+              Every result is explicitly marked <Badge kind="indicative" className="ml-1 text-[11px]">Indicative</Badge> to meet US admissions integrity standards.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-bone-muted">USSD:</span>
-            <span className="text-xs font-mono text-phosphor bg-screen px-2.5 py-1 rounded border border-phosphor/20">
+            <span className="text-xs font-mono text-fg2">USSD:</span>
+            <span className="text-xs font-mono text-phosphor bg-screen px-2.5 py-1 rounded-full ring-1 ring-inset ring-phosphor/20">
               {USSD_SERVICE_CODE} &gt; 2
             </span>
           </div>
@@ -114,20 +114,20 @@ export default function GpaConverterPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column (7 cols): Input Controls (Grade Buttons / Points Slider) */}
         <div className="lg:col-span-7 space-y-6">
-          <Card className="bg-ink-surface border-white/10">
+          <Card className="bg-surface ring-1 ring-inset ring-line/10">
             {/* Toggle Mode */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
-              <span className="text-xs font-mono uppercase tracking-wider text-bone-muted">
+            <div className="flex items-center justify-between pb-4 border-b border-line/10">
+              <span className="text-xs font-mono uppercase tracking-wider text-fg2">
                 Conversion Input
               </span>
-              <div className="flex items-center p-1 bg-ink rounded-lg border border-white/10">
+              <div className="flex items-center p-1 bg-bg rounded-xl ring-1 ring-inset ring-line/10">
                 <button
                   type="button"
                   onClick={() => setCalcMode('grade')}
-                  className={`px-3 py-1 text-xs font-mono rounded-md transition-colors ${
+                  className={`px-3 py-1 text-xs font-mono rounded-lg transition-colors ${
                     calcMode === 'grade'
-                      ? 'bg-saffron text-ink font-bold'
-                      : 'text-bone-muted hover:text-bone'
+                      ? 'bg-accent text-accent-fg font-bold'
+                      : 'text-fg2 hover:text-fg'
                   }`}
                 >
                   By Mean Grade
@@ -135,10 +135,10 @@ export default function GpaConverterPage() {
                 <button
                   type="button"
                   onClick={() => setCalcMode('points')}
-                  className={`px-3 py-1 text-xs font-mono rounded-md transition-colors ${
+                  className={`px-3 py-1 text-xs font-mono rounded-lg transition-colors ${
                     calcMode === 'points'
-                      ? 'bg-saffron text-ink font-bold'
-                      : 'text-bone-muted hover:text-bone'
+                      ? 'bg-accent text-accent-fg font-bold'
+                      : 'text-fg2 hover:text-fg'
                   }`}
                 >
                   By Aggregate (7-84)
@@ -149,7 +149,7 @@ export default function GpaConverterPage() {
             {/* Input View 1: Mean Grade Grid */}
             {calcMode === 'grade' ? (
               <div className="pt-4 space-y-4">
-                <label className="block text-xs font-mono text-bone-muted uppercase">
+                <label className="block text-xs font-mono text-fg2 uppercase">
                   Select KCSE Mean Certificate Grade:
                 </label>
                 <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
@@ -160,10 +160,10 @@ export default function GpaConverterPage() {
                         key={band.grade}
                         type="button"
                         onClick={() => handleGradeSelect(band.grade)}
-                        className={`py-3 px-2 rounded-xl border flex flex-col items-center justify-center transition-all ${
+                        className={`py-3 px-2 rounded-2xl border flex flex-col items-center justify-center transition-all ${
                           isSelected
-                            ? 'bg-saffron text-ink border-saffron font-bold shadow-lg scale-105'
-                            : 'bg-ink/60 border-white/10 text-bone hover:border-white/30 hover:bg-white/5'
+                            ? 'bg-accent text-accent-fg border-accent font-bold shadow-lg scale-105'
+                            : 'bg-bg/60 border-line/10 text-fg hover:border-line/30 hover:bg-fg/5'
                         }`}
                       >
                         <span className="font-editorial text-2xl font-bold">{band.grade}</span>
@@ -179,11 +179,11 @@ export default function GpaConverterPage() {
               /* Input View 2: Points Slider (7 to 84) */
               <div className="pt-4 space-y-5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-mono text-bone-muted uppercase">
+                  <label className="text-xs font-mono text-fg2 uppercase">
                     Slide Aggregate Points (KNEC):
                   </label>
-                  <span className="font-mono text-2xl font-bold text-saffron">
-                    {points} <span className="text-xs text-bone-muted">/ 84 points</span>
+                  <span className="font-mono text-2xl font-bold text-accent">
+                    {points} <span className="text-xs text-fg2">/ 84 points</span>
                   </span>
                 </div>
 
@@ -193,10 +193,10 @@ export default function GpaConverterPage() {
                   max="84"
                   value={points}
                   onChange={(e) => handlePointsChange(parseInt(e.target.value, 10))}
-                  className="w-full h-2 bg-ink rounded-lg appearance-none cursor-pointer accent-saffron"
+                  className="w-full h-2 bg-bg rounded-lg appearance-none cursor-pointer accent-accent"
                 />
 
-                <div className="flex items-center justify-between text-[11px] font-mono text-bone-muted">
+                <div className="flex items-center justify-between text-[11px] font-mono text-fg2">
                   <span>7 pts (Grade E)</span>
                   <span>46 pts (C+)</span>
                   <span>67 pts (B+)</span>
@@ -206,13 +206,13 @@ export default function GpaConverterPage() {
             )}
 
             {/* Scale Band Explainer */}
-            <div className="mt-6 pt-4 border-t border-white/5 text-xs font-display text-bone-muted space-y-2">
+            <div className="mt-6 pt-4 border-t border-line/10 text-xs text-fg2 space-y-2">
               <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-saffron flex-shrink-0 mt-0.5" />
+                <Info className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                 <p>
                   <strong>KNEC Aggregate Range:</strong> Grade {currentBand.grade} spans from{' '}
-                  <span className="font-mono text-bone">{currentBand.aggregateMin}</span> to{' '}
-                  <span className="font-mono text-bone">{currentBand.aggregateMax}</span> points.
+                  <span className="font-mono text-fg">{currentBand.aggregateMin}</span> to{' '}
+                  <span className="font-mono text-fg">{currentBand.aggregateMax}</span> points.
                   Points per subject: {currentBand.pointsPerSubject} pts.
                 </p>
               </div>
@@ -220,12 +220,12 @@ export default function GpaConverterPage() {
           </Card>
 
           {/* Sync With Profile Button */}
-          <div className="flex items-center justify-between p-4 rounded-xl bg-ink-elevated/40 border border-white/10">
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-surface ring-1 ring-inset ring-line/10">
             <div>
-              <p className="text-sm font-display font-medium text-bone">
+              <p className="text-sm font-medium text-fg">
                 Save Grade to Active Profile
               </p>
-              <p className="text-xs font-mono text-bone-muted">
+              <p className="text-xs font-mono text-fg2">
                 Updates profile identity for {student.fullName} ({student.phoneNumber})
               </p>
             </div>
@@ -237,7 +237,7 @@ export default function GpaConverterPage() {
             >
               {savedSuccess ? (
                 <>
-                  <Check className="w-3.5 h-3.5 mr-1 text-ink" /> Saved!
+                  <Check className="w-3.5 h-3.5 mr-1 text-accent-fg" /> Saved!
                 </>
               ) : (
                 'Save to Profile'
@@ -248,40 +248,40 @@ export default function GpaConverterPage() {
 
         {/* Right Column (5 cols): Monumental Result Display */}
         <div className="lg:col-span-5 space-y-6">
-          <Card className="bg-ink-surface border-saffron/40 relative overflow-hidden">
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <span className="text-xs font-mono uppercase tracking-widest text-saffron">
+          <Card className="bg-surface ring-1 ring-inset ring-accent/40 relative overflow-hidden">
+            <div className="flex items-center justify-between pb-3 border-b border-line/10">
+              <span className="text-xs font-mono uppercase tracking-widest text-accent">
                 Equivalent Result
               </span>
-              <Badge variant="indicative">Indicative Only</Badge>
+              <Badge kind="indicative">Indicative Only</Badge>
             </div>
 
             {/* Monumental Numeral Display */}
             <div className="py-8 text-center space-y-2">
-              <p className="font-fraunces text-7xl sm:text-8xl font-bold tracking-tighter text-bone">
+              <p className="font-editorial text-7xl sm:text-8xl font-bold tracking-tighter text-fg">
                 {currentBand.gpa40.toFixed(2)}
               </p>
-              <p className="text-xs font-mono uppercase tracking-widest text-bone-muted">
+              <p className="text-xs font-mono uppercase tracking-widest text-fg2">
                 Unweighted 4.0 Scale
               </p>
 
               <div className="pt-4 flex items-center justify-center gap-2">
-                <span className="text-xs font-mono px-3 py-1 rounded-full bg-saffron/20 text-saffron border border-saffron/40 font-bold">
+                <span className="text-xs font-mono px-3 py-1 rounded-full bg-accent/20 text-accent ring-1 ring-inset ring-accent/40 font-bold">
                   KCSE Grade {currentBand.grade}
                 </span>
-                <span className="text-xs font-mono text-bone-muted">
+                <span className="text-xs font-mono text-fg2">
                   ({points} Aggregate Points)
                 </span>
               </div>
             </div>
 
             {/* Admissions Committee Context */}
-            <div className="p-4 rounded-xl bg-ink/60 border border-white/5 space-y-2 text-xs font-display">
-              <p className="text-bone font-medium flex items-center gap-1.5">
-                <Award className="w-4 h-4 text-saffron" />
+            <div className="p-4 rounded-2xl bg-bg/60 ring-1 ring-inset ring-line/10 space-y-2 text-xs">
+              <p className="text-fg font-medium flex items-center gap-1.5">
+                <Award className="w-4 h-4 text-accent" />
                 <span>US Admissions Context:</span>
               </p>
-              <p className="text-bone-muted leading-relaxed">
+              <p className="text-fg2 leading-relaxed">
                 {currentBand.grade === 'A'
                   ? 'Top national tier. Extremely competitive for Ivy League and top-20 universities with need-blind financial aid.'
                   : currentBand.grade === 'A-'
@@ -294,14 +294,14 @@ export default function GpaConverterPage() {
           </Card>
 
           {/* 3. Common App Additional Info Snippet Box */}
-          <Card className="bg-ink-surface border-white/10 space-y-3">
+          <Card className="bg-surface ring-1 ring-inset ring-line/10 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-mono uppercase tracking-wider text-bone-muted">
+              <h3 className="text-xs font-mono uppercase tracking-wider text-fg2">
                 Common App Copy-Paste Note
               </h3>
               <button
                 onClick={handleCopySnippet}
-                className="text-xs font-mono text-saffron hover:text-saffron-light flex items-center gap-1 transition-colors"
+                className="text-xs font-mono text-accent hover:opacity-80 flex items-center gap-1 transition-opacity"
               >
                 {copied ? (
                   <>
@@ -317,11 +317,11 @@ export default function GpaConverterPage() {
               </button>
             </div>
 
-            <p className="text-xs font-display text-bone-muted">
+            <p className="text-xs text-fg2">
               Paste into Common App &gt; <em>Additional Information</em> to explain your KCSE grading curve:
             </p>
 
-            <div className="p-3 bg-ink rounded-lg border border-white/10 font-mono text-xs text-bone-muted leading-relaxed">
+            <div className="p-3 bg-bg rounded-xl ring-1 ring-inset ring-line/10 font-mono text-xs text-fg2 leading-relaxed">
               {commonAppSnippet}
             </div>
           </Card>
@@ -330,4 +330,3 @@ export default function GpaConverterPage() {
     </div>
   );
 }
-
