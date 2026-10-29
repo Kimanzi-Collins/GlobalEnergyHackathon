@@ -31,6 +31,22 @@ import type { KcseGradeBand, EssayType } from '@/lib/types';
  *   9. More               -> 1. Mock interview call 2. Help
  */
 
+
+const GUIDE_STEPS_USSD = [
+  { order: 1, title: 'Understand Holistic Adm', summary: 'US colleges review full app: grades, essays, ECs. Never pay an agency.', cost: 0 },
+  { order: 2, title: 'Convert KCSE to GPA', summary: 'Pepea converts KCSE to 4.0 US scale. Always submit authentic KNEC slip.', cost: 0 },
+  { order: 3, title: 'Standardized Testing', summary: 'Check if school requires SAT/ACT or is test-optional. Prepare Duolingo/IELTS.', cost: 0 },
+  { order: 4, title: 'Build College List', summary: 'Select 8-12 colleges with need-blind / 100% full demonstrated financial aid.', cost: 0 },
+  { order: 5, title: 'Create Common App', summary: 'Register free account at commonapp.org using a reliable personal email.', cost: 0 },
+  { order: 6, title: 'Request Fee Waivers', summary: 'Request $0 Common App fee waiver. Your high school counselor confirms it.', cost: 0 },
+  { order: 7, title: 'Personal Statement', summary: 'Write one 650-word story showing agency. Avoid generic Insha cliches.', cost: 0 },
+  { order: 8, title: 'Supplemental Essays', summary: 'Answer school-specific prompts. Name specific labs, professors & curriculum.', cost: 0 },
+  { order: 9, title: 'Teacher Recs (LOR)', summary: 'Request 2 teachers + principal 4 weeks early. Provide 1-page brag sheet.', cost: 0 },
+  { order: 10, title: 'CSS Profile Aid', summary: 'Submit CSS Profile / ISFAA with family income docs for 100% aid package.', cost: 0 },
+  { order: 11, title: 'Submit Deadlines', summary: 'Submit at least 24h before deadline (EA: Nov 1, RD: Jan 1). Save receipts.', cost: 0 },
+  { order: 12, title: 'F-1 Visa & I-20', summary: 'Receive I-20, pay SEVIS fee ($350) and book Nairobi US Embassy interview.', cost: 535 },
+];
+
 const MAJOR_CODES: Record<string, string> = {
   '1': 'Computer Science',
   '2': 'Engineering',
@@ -82,92 +98,132 @@ export async function POST(req: Request) {
 
     const branch = steps[0];
 
-    // ==================================================================
-    // 1. APPLY GUIDE (Paged: 4 per screen, 8=Next)
+        // ==================================================================
+    // 1. APPLY GUIDE (Paged: 4 per screen, step progression 1 -> 12)
     // ==================================================================
     if (branch === '1') {
-      const guideSteps = await getGuideSteps();
-      const PAGE_SIZE = 4;
+      const guideSteps = GUIDE_STEPS_USSD;
 
-      if (steps.length === 1) {
-        // Page 1: Steps 1-4
-        const pageItems = guideSteps.slice(0, PAGE_SIZE);
-        let screen = `Application Guide (1/3):\n`;
-        pageItems.forEach((s, idx) => {
-          screen += `${idx + 1}. ${s.title.slice(0, 22)}\n`;
-        });
-        screen += `8. Next\n0. Back`;
-        return ussdResponse(screen);
-      }
-
-      if (steps[1] === '8') {
-        // Page 2 or Page 3
-        if (steps.length === 2) {
-          // Page 2: Steps 5-8
-          const pageItems = guideSteps.slice(PAGE_SIZE, PAGE_SIZE * 2);
-          let screen = `Guide (2/3):\n`;
-          pageItems.forEach((s, idx) => {
-            screen += `${idx + 5}. ${s.title.slice(0, 22)}\n`;
-          });
-          screen += `8. Next\n0. Back`;
-          return ussdResponse(screen);
-        }
-
-        if (steps[2] === '8') {
-          // Page 3: Steps 9-12
-          if (steps.length === 3) {
-            const pageItems = guideSteps.slice(PAGE_SIZE * 2, PAGE_SIZE * 3);
-            let screen = `Guide (3/3):\n`;
-            pageItems.forEach((s, idx) => {
-              screen += `${idx + 9}. ${s.title.slice(0, 22)}\n`;
-            });
-            screen += `0. Back\n00. Home`;
-            return ussdResponse(screen);
-          }
-
-          // Step Detail from page 3
-          const stepNum = parseInt(steps[3], 10);
-          const selected = guideSteps.find((s) => s.order === stepNum);
-          if (!selected) {
-            return ussdResponse(`Invalid step.\nEnter digit (9-12):\n0. Back\n00. Home`);
-          }
-          return ussdResponse(
-            `Step ${selected.order}: ${selected.title.slice(0, 24)}\n` +
-            `${selected.summary.slice(0, 100)}\n` +
-            `Cost: $${selected.costUsd || 0}\n` +
-            `0. Back\n00. Home`,
-            true
-          );
-        }
-
-        // Step Detail from page 2
-        const stepNum = parseInt(steps[2], 10);
-        const selected = guideSteps.find((s) => s.order === stepNum);
-        if (!selected) {
-          return ussdResponse(`Invalid step.\nEnter digit (5-8):\n0. Back\n00. Home`);
-        }
+      const renderStep = (stepOrder: number) => {
+        const step = guideSteps.find((s) => s.order === stepOrder) || guideSteps[0];
+        const isLast = step.order === 12;
+        const nextPrompt = isLast ? '1. Finish & SMS Guide' : `1. Next (Step ${step.order + 1})`;
         return ussdResponse(
-          `Step ${selected.order}: ${selected.title.slice(0, 24)}\n` +
-          `${selected.summary.slice(0, 100)}\n` +
-          `Cost: $${selected.costUsd || 0}\n` +
-          `0. Back\n00. Home`,
-          true
+          `Step ${step.order}/12: ${step.title}\n` +
+          `${step.summary}\n` +
+          `Cost: ${step.cost}\n` +
+          `${nextPrompt}\n` +
+          `0. Back\n` +
+          `00. Home`
+        );
+      };
+
+      // 1) List Page 1: Steps 1-4
+      if (steps.length === 1) {
+        return ussdResponse(
+          `Application Guide (1/3):\n` +
+          `1. Understand Holistic Adm\n` +
+          `2. Convert KCSE to GPA\n` +
+          `3. Standardized Testing\n` +
+          `4. Build College List\n` +
+          `8. Next\n` +
+          `0. Back`
         );
       }
 
-      // Step Detail from page 1
-      const stepNum = parseInt(steps[1], 10);
-      const selected = guideSteps.find((s) => s.order === stepNum);
-      if (!selected) {
+      // 2) Navigation through Page 2 & 3
+      if (steps[1] === '8' || steps[1] === '9') {
+        // Page 2
+        if (steps.length === 2) {
+          return ussdResponse(
+            `Guide (2/3):\n` +
+            `5. Create Common App\n` +
+            `6. Request Fee Waivers\n` +
+            `7. Personal Statement\n` +
+            `8. Supplemental Essays\n` +
+            `9. Next\n` +
+            `0. Back`
+          );
+        }
+
+        // Page 3
+        if (steps[2] === '9' || steps[2] === '8') {
+          if (steps.length === 3) {
+            return ussdResponse(
+              `Guide (3/3):\n` +
+              `9. Teacher Recs (LOR)\n` +
+              `10. CSS Profile Aid\n` +
+              `11. Submit Deadlines\n` +
+              `12. F-1 Visa & I-20\n` +
+              `0. Back\n` +
+              `00. Home`
+            );
+          }
+
+          const baseStep = parseInt(steps[3], 10);
+          if (isNaN(baseStep) || baseStep < 9 || baseStep > 12) {
+            return ussdResponse(`Invalid step.\nEnter digit (9-12):\n0. Back\n00. Home`);
+          }
+          const advances = steps.slice(4).filter((s) => s === '1').length;
+          const currentStep = baseStep + advances;
+
+          if (currentStep > 12) {
+            await atSMS.send({
+              to: [phoneNumber],
+              message: smsTemplates.guideStep({
+                stepNumber: 12,
+                stepTitle: 'F-1 Visa & Pre-Departure',
+                action: 'Complete DS-160 and interview at US Embassy Nairobi',
+              }),
+            }).catch(() => {});
+            return ussdResponse(`Congratulations! You completed the 12-step admissions roadmap.\nSMS sent with your full checklist!`, true);
+          }
+
+          return renderStep(currentStep);
+        }
+
+        const baseStep = parseInt(steps[2], 10);
+        if (isNaN(baseStep) || baseStep < 5 || baseStep > 8) {
+          return ussdResponse(`Invalid step.\nEnter digit (5-8):\n0. Back\n00. Home`);
+        }
+        const advances = steps.slice(3).filter((s) => s === '1').length;
+        const currentStep = baseStep + advances;
+
+        if (currentStep > 12) {
+          await atSMS.send({
+            to: [phoneNumber],
+            message: smsTemplates.guideStep({
+              stepNumber: 12,
+              stepTitle: 'F-1 Visa & Pre-Departure',
+              action: 'Complete DS-160 and interview at US Embassy Nairobi',
+            }),
+          }).catch(() => {});
+          return ussdResponse(`Congratulations! You completed the 12-step admissions roadmap.\nSMS sent with your full checklist!`, true);
+        }
+
+        return renderStep(currentStep);
+      }
+
+      const baseStep = parseInt(steps[1], 10);
+      if (isNaN(baseStep) || baseStep < 1 || baseStep > 4) {
         return ussdResponse(`Invalid choice. Enter 1-4 or 8:\n0. Back\n00. Home`);
       }
-      return ussdResponse(
-        `Step ${selected.order}: ${selected.title.slice(0, 24)}\n` +
-        `${selected.summary.slice(0, 100)}\n` +
-        `Cost: $${selected.costUsd || 0}\n` +
-        `0. Back\n00. Home`,
-        true
-      );
+      const advances = steps.slice(2).filter((s) => s === '1').length;
+      const currentStep = baseStep + advances;
+
+      if (currentStep > 12) {
+        await atSMS.send({
+          to: [phoneNumber],
+          message: smsTemplates.guideStep({
+            stepNumber: 12,
+            stepTitle: 'F-1 Visa & Pre-Departure',
+            action: 'Complete DS-160 and interview at US Embassy Nairobi',
+          }),
+        }).catch(() => {});
+        return ussdResponse(`Congratulations! You completed the 12-step admissions roadmap.\nSMS sent with your full checklist!`, true);
+      }
+
+      return renderStep(currentStep);
     }
 
     // ==================================================================
@@ -277,7 +333,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ==================================================================
+        // ==================================================================
     // 3. COLLEGES FOR ME (Grade & Major Based)
     // ==================================================================
     if (branch === '3') {
@@ -299,16 +355,16 @@ export async function POST(req: Request) {
 
       if (steps.length === 2) {
         return ussdResponse(
-          `Top 100% Aid Matches for ${major.slice(0, 10)}:\n` +
+          `Top 100% Aid for ${major.slice(0, 10)}:\n` +
           `1. MIT (Need-Blind)\n` +
           `2. Harvard (Need-Blind)\n` +
           `3. Amherst (Need-Blind)\n` +
-          `1. SMS me the list\n` +
+          `4. SMS me the list\n` +
           `0. Back`
         );
       }
 
-      if (steps[2] === '1') {
+      if (steps[2] === '4') {
         await atSMS.send({
           to: [phoneNumber],
           message: smsTemplates.collegeMatches({
@@ -319,10 +375,40 @@ export async function POST(req: Request) {
         return ussdResponse(`List sent via SMS! All 4 universities meet 100% demonstrated aid for Kenyans.`, true);
       }
 
+      if (steps[2] === '1') {
+        return ussdResponse(
+          `MIT (Need-Blind):\n` +
+          `- Early Action: Nov 1\n` +
+          `- Full Need Met: 100%\n` +
+          `- Int'l Need-Blind: Yes\n` +
+          `0. Back\n00. Home`
+        );
+      }
+
+      if (steps[2] === '2') {
+        return ussdResponse(
+          `Harvard (Need-Blind):\n` +
+          `- Restrictive EA: Nov 1\n` +
+          `- $0 parent share <$85k\n` +
+          `- Int'l Need-Blind: Yes\n` +
+          `0. Back\n00. Home`
+        );
+      }
+
+      if (steps[2] === '3') {
+        return ussdResponse(
+          `Amherst (Need-Blind):\n` +
+          `- Regular Decision: Jan 5\n` +
+          `- Full Need Met: 100%\n` +
+          `- Need-Blind globally: Yes\n` +
+          `0. Back\n00. Home`
+        );
+      }
+
       return ussdResponse(`Invalid choice.\n0. Back\n00. Home`);
     }
 
-    // ==================================================================
+        // ==================================================================
     // 4. FINANCIAL AID (1. Full Aid, 2. Partial)
     // ==================================================================
     if (branch === '4') {
@@ -342,7 +428,7 @@ export async function POST(req: Request) {
             `1. Harvard Aid Initiative\n` +
             `2. MIT Full Need Grant\n` +
             `3. Mastercard Foundation\n` +
-            `1. SMS me details\n` +
+            `4. SMS me details\n` +
             `0. Back`
           );
         } else {
@@ -351,13 +437,13 @@ export async function POST(req: Request) {
             `1. University Merit Grants\n` +
             `2. EducationUSA OFP\n` +
             `3. Tuition Exchange\n` +
-            `1. SMS me details\n` +
+            `4. SMS me details\n` +
             `0. Back`
           );
         }
       }
 
-      if (steps[2] === '1') {
+      if (steps[2] === '4') {
         const programs = steps[1] === '1'
           ? ['Harvard Full Need', 'MIT Need-Based', 'Mastercard Foundation']
           : ['EducationUSA OFP', 'Merit Scholarships', 'College Board Waiver'];
@@ -368,6 +454,64 @@ export async function POST(req: Request) {
         }).catch(() => {});
 
         return ussdResponse(`Programs list sent to your SMS! Apply $0 fee waivers on Common App.`, true);
+      }
+
+      if (steps[1] === '1') {
+        if (steps[2] === '1') {
+          return ussdResponse(
+            `Harvard Aid Initiative:\n` +
+            `- 100% tuition, room & board\n` +
+            `- Covers family <$85k/yr\n` +
+            `- $0 parent contribution\n` +
+            `0. Back\n00. Home`
+          );
+        }
+        if (steps[2] === '2') {
+          return ussdResponse(
+            `MIT Full Need Grant:\n` +
+            `- Covers 100% calculated need\n` +
+            `- Tuition free <$140k/yr\n` +
+            `- Fee waiver eligible: Yes\n` +
+            `0. Back\n00. Home`
+          );
+        }
+        if (steps[2] === '3') {
+          return ussdResponse(
+            `Mastercard Foundation:\n` +
+            `- Full ride for African youth\n` +
+            `- Airfare, books & stipend\n` +
+            `- Need & leadership based\n` +
+            `0. Back\n00. Home`
+          );
+        }
+      } else {
+        if (steps[2] === '1') {
+          return ussdResponse(
+            `Univ Merit Grants:\n` +
+            `- $10,000 - $30,000/yr\n` +
+            `- Based on KCSE / SAT grades\n` +
+            `- Automatic consideration\n` +
+            `0. Back\n00. Home`
+          );
+        }
+        if (steps[2] === '2') {
+          return ussdResponse(
+            `EducationUSA OFP:\n` +
+            `- Opportunity Funds Program\n` +
+            `- Covers upfront test & fees\n` +
+            `- US Embassy advising\n` +
+            `0. Back\n00. Home`
+          );
+        }
+        if (steps[2] === '3') {
+          return ussdResponse(
+            `Tuition Exchange:\n` +
+            `- Regional tuition discounts\n` +
+            `- Institutional scholarships\n` +
+            `- Merit reduction schemes\n` +
+            `0. Back\n00. Home`
+          );
+        }
       }
 
       return ussdResponse(`Invalid choice.\n0. Back\n00. Home`);
@@ -442,18 +586,66 @@ export async function POST(req: Request) {
       return ussdResponse(`Invalid choice.\n0. Back\n00. Home`);
     }
 
-    // ==================================================================
+        // ==================================================================
     // 6. DEADLINES (Next 3 Deadlines)
     // ==================================================================
     if (branch === '6') {
-      return ussdResponse(
-        `Upcoming Deadlines:\n` +
-        `1. Nov 1: Early Action (MIT, Harvard, Princeton, Yale)\n` +
-        `2. Nov 15: EA2 (Bowdoin)\n` +
-        `3. Jan 1: Regular Decision (Columbia, Stanford)\n` +
-        `0. Back`,
-        true
-      );
+      if (steps.length === 1) {
+        return ussdResponse(
+          `Upcoming Deadlines:\n` +
+          `1. Nov 1: Early Action\n` +
+          `2. Nov 15: EA2\n` +
+          `3. Jan 1: Regular Decision\n` +
+          `4. SMS me deadlines\n` +
+          `0. Back`
+        );
+      }
+
+      if (steps[1] === '4') {
+        await atSMS.send({
+          to: [phoneNumber],
+          message: smsTemplates.nextDeadline({
+            school: 'MIT & Harvard',
+            type: 'Early Action / REA',
+            date: 'Nov 1',
+            daysLeft: 3,
+          }),
+        }).catch(() => {});
+
+        return ussdResponse(`Deadlines sent to your SMS! Prepare Common App before deadline day.`, true);
+      }
+
+      if (steps[1] === '1') {
+        return ussdResponse(
+          `Nov 1 Early Action:\n` +
+          `- MIT, Harvard, Princeton, Yale\n` +
+          `- EA / Restrictive EA\n` +
+          `- Results released mid-Dec\n` +
+          `0. Back\n00. Home`
+        );
+      }
+
+      if (steps[1] === '2') {
+        return ussdResponse(
+          `Nov 15 EA2:\n` +
+          `- Bowdoin, Kenyon, Macalester\n` +
+          `- Supplemental essays due\n` +
+          `- CSS Profile due\n` +
+          `0. Back\n00. Home`
+        );
+      }
+
+      if (steps[1] === '3') {
+        return ussdResponse(
+          `Jan 1 Regular Decision:\n` +
+          `- Columbia, Stanford, Penn\n` +
+          `- Main applicant cycle\n` +
+          `- Results released late March\n` +
+          `0. Back\n00. Home`
+        );
+      }
+
+      return ussdResponse(`Invalid choice.\n0. Back\n00. Home`);
     }
 
     // ==================================================================

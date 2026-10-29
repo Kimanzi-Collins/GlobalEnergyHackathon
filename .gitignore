@@ -23,6 +23,7 @@ dist/
 .env.test.local
 .env.production.local
 *.env.local
+.env.*
 
 # Hackathon blueprint & planning docs (per user instruction)
 pepea_abroad_app_blueprint.md
